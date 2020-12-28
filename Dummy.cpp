@@ -18,7 +18,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
     return NOT_YOUR_TURN;
 
   if (bet < cur_chips && bet != -1)
-    // Invalid chip @value given.
+    // Invalid chip @bet given.
     return INVALID_BET;
 
   if (bet > cur_chips) {
@@ -47,7 +47,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
         // Evaluate the winner.
         prev_winner = Evaluate();
 
-        // Liquidition
+        // Liquidation
         chip_t total_chips = 0;
         for(uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
           total_chips += roundbets[uid];
@@ -81,27 +81,6 @@ const Dummy::status_t Dummy::Begin() {
     ResetGame();
 
   return state;
-}
-
-const int Dummy::Score(const uid_t uid) {
-  // TODO: Record the winner cards into attribute?
-
-  // TODO: Evalute the score for @uid.
-  const auto &cards = holecards[uid];
-
-  // 1. Royal Straight Flush
-
-  // 2. Straight Flush
-  // 3. Four of a kind
-  // 4. Full house
-  // 5. Flush
-  // 6. Straight
-  // 7. Three of a kind
-  // 8. Two pair
-  // 9. One Pair
-  // 10. High card
-
-  return 0;
 }
 
 const Dummy::uid_t Dummy::Evaluate() {
