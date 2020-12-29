@@ -9,6 +9,7 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
   uid2addr.emplace(LastPlayer(), addr);
   holecards.emplace(LastPlayer(), std::vector<card_t>());
+  alive.emplace(LastPlayer(), 0);
   return LastPlayer();
 }
 
@@ -23,6 +24,13 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   if (bet < cur_chips && bet != -1)
     // Invalid chip @bet given.
     return GameSignal::INVALID_BET;
+
+  if (bet == -1) {
+    // Someone choose to drop.
+    alive[uid] = false;
+    if (--alive_count == 1)
+      Evaluate();
+  }
 
   if (bet > cur_chips) {
     // Raise
@@ -48,30 +56,24 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
         NextCard(-1);
       } else {
         // Evaluate the winner.
-        prev_winner = Evaluate();
-
-        // Liquidation
-        chip_t total_chips = 0;
-        for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-          total_chips += roundbets[uid];
-          bankroll[uid] -= roundbets[uid];
-        }
-        bankroll[uid] += total_chips;
-
+        Evaluate();
         return state;
       }
     }
   }
 
-  if (++prev_pos == LastPlayer())
-    prev_pos = FirstPlayer() - 1;
+  while (alive_count > 1) {
+    if (++prev_pos == LastPlayer())
+      prev_pos = FirstPlayer() - 1;
+    if (alive[prev_pos])
+      break;
+  }
 
   return state;
 }
 
 const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
   GameStatus ret(state);
-  ret.chips = chips;
   ret.board = board;
   ret.personal = holecards.at(uid);
   return ret;
@@ -86,15 +88,17 @@ const Dummy::status_t Dummy::Begin() {
   return state;
 }
 
-const Dummy::uid_t Dummy::Evaluate() {
+void Dummy::Evaluate() {
   // Evaluate the game to determine the winner.
 
-  if (board.size() != 5)
-    return 0;
+  const auto len = board.size();
+  assert(len == MAX_BOARD_SIZE);
 
   uid_t winner = 0;
   score_t top_score;
   for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+    if (!alive[uid])
+      continue;
     score_t cur_score = Score(uid);
     if (cur_score.Compare(top_score) == 1) {
       top_score = cur_score;
@@ -102,14 +106,23 @@ const Dummy::uid_t Dummy::Evaluate() {
     }
   }
   state = GameSignal::STOP;
-  return winner;
+  assert(winner);
+
+  // Liquidation
+  chip_t total_chips = 0;
+  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+    total_chips += roundbets[uid];
+    bankroll[uid] -= roundbets[uid];
+  }
+  bankroll[winner] += total_chips;
+
+  prev_winner = winner;
 }
 
 void Dummy::ResetGame() {
   // *Not* to initialize the whole game engine.
 
   // 1. reset game status;
-  chips.resize(0);
   for (auto &e : holecards)
     e.second.resize(0);
   for (auto &e : roundbets)
@@ -124,6 +137,10 @@ void Dummy::ResetGame() {
   if (small_blind > LastPlayer())
     small_blind = 1;
   cur_chips = 0;
+
+  for (auto &ent : alive)
+    ent.second = 1;
+  alive_count = user_count;
 
   // 2. shuffle;
   Shuffle();
@@ -200,6 +217,7 @@ const void Dummy::DumpDebugMessages(std::ostream &out) {
     out << std::dec << endl;
     out << "\tbankroll: " << bankroll[uid] << endl;
     out << "\troundbets: " << roundbets[uid] << endl;
+    out << "\talive?: " << alive[uid] << endl;
   }
   out << divider << endl;
 }

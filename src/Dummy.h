@@ -22,14 +22,13 @@ public:
 private:
   std::map<uid_t, const std::string> uid2addr;
 
-  std::vector<chip_t> chips;
-
   std::map<uid_t, std::vector<card_t>> holecards;
   std::map<uid_t, chip_t> bankroll, roundbets;
+  std::map<uid_t, int> alive;
   std::vector<card_t> board, deck;
 
   status_t state;
-  int user_count;
+  int user_count, alive_count;
   uid_t prev_pos, button, prev_winner, small_blind;
   chip_t cur_chips;
   bool raised;
@@ -53,14 +52,13 @@ public:
 
 private:
   const score_t Score(const uid_t uid);
-  const uid_t Evaluate();
+  void Evaluate();
   void ResetGame();
   void NextCard(uid_t uid);
   void Shuffle();
 };
 
 struct GameStatus {
-  std::vector<Dummy::chip_t> chips;
   std::vector<Dummy::card_t> board, personal;
   Dummy::status_t state;
   explicit GameStatus(Dummy::status_t state) : state(state) {}
