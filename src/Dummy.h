@@ -1,13 +1,13 @@
 #ifndef SAILGAME_TEXAS
 #define SAILGAME_TEXAS
 
-#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
 
 struct GameStatus;
 struct CardScore;
+class DummyBackdoor;
 
 class Dummy {
 public:
@@ -19,12 +19,14 @@ public:
   using status_t = GameSignal;
   using score_t = CardScore;
 
+  friend class DummyBackdoor;
+
 private:
   std::map<uid_t, const std::string> uid2addr;
 
   std::map<uid_t, std::vector<card_t>> holecards;
   std::map<uid_t, chip_t> bankroll, roundbets;
-  std::map<uid_t, int> alive;
+  std::map<uid_t, int> alive, allin;
   std::vector<card_t> board, deck;
 
   status_t state;
@@ -42,9 +44,11 @@ public:
   const uid_t Join(const std::string &addr);
   // positive -> raise or call; zero -> check; -1 -> conceed.
   const status_t Play(const uid_t uid, const chip_t value);
+  const chip_t Topup(const uid_t uid, const chip_t value) {
+    return (bankroll[uid] += value);
+  }
 
   const GameStatus DumpStatusForUser(const uid_t uid) const;
-  const void DumpDebugMessages(std::ostream &out);
 
   const uid_t PreviousWinner() const { return prev_winner; }
   const uid_t FirstPlayer() const { return 1; }

@@ -1,5 +1,4 @@
 #include "TexasScore.h"
-#include "Dummy.h"
 
 #include <functional>
 #include <map>

@@ -10,6 +10,7 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
   uid2addr.emplace(LastPlayer(), addr);
   holecards.emplace(LastPlayer(), std::vector<card_t>());
   alive.emplace(LastPlayer(), 0);
+  allin.emplace(LastPlayer(), 0);
   return LastPlayer();
 }
 
@@ -27,7 +28,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
 
   if (bet == -1) {
     // Someone choose to drop.
-    alive[uid] = false;
+    alive[uid] = 0;
     if (--alive_count == 1)
       Evaluate();
   }
@@ -38,6 +39,11 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
     cur_chips = bet;
   }
   roundbets[uid] = bet;
+  if (bet == bankroll[uid]) {
+    // Denotes an all-in
+    alive[uid] = 0;
+    allin[uid] = 1;
+  }
 
   if (uid == small_blind) {
     if (raised) {
@@ -97,7 +103,7 @@ void Dummy::Evaluate() {
   uid_t winner = 0;
   score_t top_score;
   for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-    if (!alive[uid])
+    if (!alive[uid] && !allin[uid])
       continue;
     score_t cur_score = Score(uid);
     if (cur_score.Compare(top_score) == 1) {
@@ -117,6 +123,8 @@ void Dummy::Evaluate() {
   bankroll[winner] += total_chips;
 
   prev_winner = winner;
+  for (auto &ent : alive)
+    ent.second = 0;
 }
 
 void Dummy::ResetGame() {
@@ -139,8 +147,11 @@ void Dummy::ResetGame() {
   cur_chips = 0;
 
   for (auto &ent : alive)
-    ent.second = 1;
+    ent.second = (bankroll[ent.first] > 0);
   alive_count = user_count;
+
+  for (auto &ent : allin)
+    ent.second = 0;
 
   // 2. shuffle;
   Shuffle();
@@ -188,36 +199,4 @@ void Dummy::Shuffle() {
 
   auto rng = std::default_random_engine{};
   std::shuffle(deck.begin(), deck.end(), rng);
-}
-
-const void Dummy::DumpDebugMessages(std::ostream &out) {
-  using namespace std;
-  const string divider(30, '=');
-  out << divider << endl;
-  out << "State: " << static_cast<int>(state)
-      << "\t\tThe number of players: " << user_count
-      << "\t\tBoard: " << std::hex;
-  for (auto const card : board)
-    out << card << ' ';
-  out << std::dec << '[' << board.size() << ']' << endl;
-  out << "Deck: " << std::hex;
-  for (auto const card : deck)
-    out << card << ' ';
-  out << std::dec << '[' << deck.size() << ']' << endl;
-  out << "Previous pos: " << prev_pos << "\t\tButton pos: " << button
-      << "\t\tCutoff: " << small_blind << "\t\tChips: " << cur_chips << endl;
-  out << "Someone raised this turn? " << std::boolalpha << raised << std::dec
-      << endl;
-  for (uid_t uid = 1; uid <= LastPlayer(); ++uid) {
-    out << endl;
-    out << "\t[" << uid2addr[uid] << "]\tuid: " << uid << endl;
-    out << "\tholecards: " << std::hex;
-    for (auto const card : holecards[uid])
-      out << card << ' ';
-    out << std::dec << endl;
-    out << "\tbankroll: " << bankroll[uid] << endl;
-    out << "\troundbets: " << roundbets[uid] << endl;
-    out << "\talive?: " << alive[uid] << endl;
-  }
-  out << divider << endl;
 }

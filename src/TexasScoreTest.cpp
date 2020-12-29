@@ -1,10 +1,6 @@
 #include "TexasScore.h"
 #include "Dummy.h"
-
-#include <iostream>
-
-#define assert_equal(a, b) is_equal(a, b, __LINE__)
-void is_equal(int, int, int);
+#include "TestUtility.h"
 
 int main() {
   using namespace poker;
@@ -341,11 +337,3 @@ int main() {
   return 0;
 }
 
-void is_equal(int src, int target, int linum) {
-  if (src == target)
-    return;
-  std::cerr << "At line: " << linum << ", expect [" << target << "(0x"
-            << std::hex << target << ")], but got [" << std::dec << src << "(0x"
-            << std::hex << src << ")]" << std::endl;
-  exit(1);
-}
