@@ -132,15 +132,9 @@ int four_of_a_kind(const cardarr_t &cards) {
 }
 
 int full_house(const cardarr_t &cards) {
-  int three = three_of_a_kind(cards), two = two_pair(cards);
-  if (three && two) {
-    int ret = three << 4;
-    if ((two & 0xf) == three)
-      ret |= (two & 0xf0) >> 4;
-    else
-      ret |= (two & 0xf);
-    return ret;
-  }
+  int three = three_of_a_kind(cards), two = one_pair(cards);
+  if (three && two)
+    return three << 4 | two;
   return 0;
 }
 
@@ -217,10 +211,14 @@ int one_pair(const cardarr_t &cards) {
     else
       cnt[num] = 1;
   }
+
+  // Return the max pair to avoid the ambiguity from the case of an equal
+  // two-pair. By doing this, it will correctly compare by the high-cards.
+  int ret = 0;
   for (const auto &ent : cnt)
     if (ent.second == 2)
-      return ent.first;
-  return 0;
+      ret = std::max(ret, ent.first);
+  return ret;
 }
 
 int high_card(const cardarr_t &cards) {
