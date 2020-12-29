@@ -11,13 +11,13 @@ struct CardScore;
 
 class Dummy {
 public:
+  enum class GameSignal { STOP, READY, NOT_YOUR_TURN, INVALID_BET };
+
   using uid_t = int;
   using chip_t = int;
   using card_t = int;
-  using status_t = int;
+  using status_t = GameSignal;
   using score_t = CardScore;
-
-  enum { STOP = -1, READY = 0, NOT_YOUR_TURN = 1, INVALID_BET = 2 };
 
 private:
   std::map<uid_t, const std::string> uid2addr;
@@ -30,14 +30,14 @@ private:
 
   status_t state;
   int user_count;
-  uid_t prev_pos, button, prev_winner, cutoff;
+  uid_t prev_pos, button, prev_winner, small_blind;
   chip_t cur_chips;
   bool raised;
 
 public:
   explicit Dummy()
-      : state(STOP), user_count(0), prev_pos(-1), button(-1), prev_winner(-1),
-        cutoff(-1), cur_chips(-1), raised(false) {}
+      : state(GameSignal::STOP), user_count(0), prev_pos(-1), button(-1),
+        prev_winner(-1), small_blind(-1), cur_chips(-1), raised(false) {}
 
   const status_t Begin();
   const uid_t Join(const std::string &addr);
@@ -63,7 +63,7 @@ struct GameStatus {
   std::vector<Dummy::chip_t> chips;
   std::vector<Dummy::card_t> board, personal;
   Dummy::status_t state;
-  GameStatus(Dummy::status_t state = 0) : state(state) {}
+  explicit GameStatus(Dummy::status_t state) : state(state) {}
 };
 
 struct CardScore {
@@ -86,7 +86,7 @@ namespace poker {
 // clang-format off
   enum {
     H1 = 0x11, H2, H3, H4, H5, H6, H7, H8, H9, H10, HJ, HQ, HK, // Hearts
-    S1 = 0x21, S2, S3, S4, S5, S6, S7, S8, S9, S10, SJ, SQ, SK, // Spides
+    S1 = 0x21, S2, S3, S4, S5, S6, S7, S8, S9, S10, SJ, SQ, SK, // Spades
     D1 = 0x31, D2, D3, D4, D5, D6, D7, D8, D9, D10, DJ, DQ, DK, // Diamonds
     C1 = 0x41, C2, C3, C4, C5, C6, C7, C8, C9, C10, CJ, CQ, CK  // Clubs
   };

@@ -2,6 +2,9 @@
 #include <algorithm>
 #include <random>
 
+#define MAX_BOARD_SIZE 5
+#define FLOP_BOARD_SIZE 3
+
 const Dummy::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
   uid2addr.emplace(LastPlayer(), addr);
@@ -10,16 +13,16 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
 }
 
 const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
-  if (state != READY)
+  if (state != GameSignal::READY)
     return state;
 
   if (uid != prev_pos + 1)
     // Not the turn for the user of @uid.
-    return NOT_YOUR_TURN;
+    return GameSignal::NOT_YOUR_TURN;
 
   if (bet < cur_chips && bet != -1)
     // Invalid chip @bet given.
-    return INVALID_BET;
+    return GameSignal::INVALID_BET;
 
   if (bet > cur_chips) {
     // Raise
@@ -28,19 +31,19 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   }
   roundbets[uid] = bet;
 
-  if (uid == cutoff) {
+  if (uid == small_blind) {
     if (raised) {
       // Someone raised within this turn.
       raised = false;
     } else {
       // All checked.
-      if (board.size() < 3) {
+      if (board.size() < FLOP_BOARD_SIZE) {
         // Flop.
         NextCard(-1);
         NextCard(-1);
         NextCard(-1);
 
-      } else if (board.size() < 5) {
+      } else if (board.size() < MAX_BOARD_SIZE) {
         // Turn or river.
         NextCard(-1);
       } else {
@@ -67,7 +70,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
 }
 
 const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
-  GameStatus ret;
+  GameStatus ret(state);
   ret.chips = chips;
   ret.board = board;
   ret.personal = holecards.at(uid);
@@ -77,7 +80,7 @@ const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
 const Dummy::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
-  if (state == STOP)
+  if (state == GameSignal::STOP)
     ResetGame();
 
   return state;
@@ -98,7 +101,7 @@ const Dummy::uid_t Dummy::Evaluate() {
       winner = uid;
     }
   }
-  state = STOP;
+  state = GameSignal::STOP;
   return winner;
 }
 
@@ -113,13 +116,13 @@ void Dummy::ResetGame() {
     e.second = 0;
   board.resize(0);
 
-  state = READY;
+  state = GameSignal::READY;
   if (++button > LastPlayer())
     button = 1;
   prev_pos = button;
-  cutoff = prev_pos + 1;
-  if (cutoff > LastPlayer())
-    cutoff = 1;
+  small_blind = prev_pos + 1;
+  if (small_blind > LastPlayer())
+    small_blind = 1;
   cur_chips = 0;
 
   // 2. shuffle;
@@ -132,7 +135,7 @@ void Dummy::ResetGame() {
   }
 
   // 4. Preflop
-  prev_pos = cutoff - 1;
+  prev_pos = small_blind - 1;
   Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 1);
   Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 2);
   raised = false;
@@ -174,7 +177,8 @@ const void Dummy::DumpDebugMessages(std::ostream &out) {
   using namespace std;
   const string divider(30, '=');
   out << divider << endl;
-  out << "State: " << state << "\t\tThe number of players: " << user_count
+  out << "State: " << static_cast<int>(state)
+      << "\t\tThe number of players: " << user_count
       << "\t\tBoard: " << std::hex;
   for (auto const card : board)
     out << card << ' ';
@@ -184,7 +188,7 @@ const void Dummy::DumpDebugMessages(std::ostream &out) {
     out << card << ' ';
   out << std::dec << '[' << deck.size() << ']' << endl;
   out << "Previous pos: " << prev_pos << "\t\tButton pos: " << button
-      << "\t\tCutoff: " << cutoff << "\t\tChips: " << cur_chips << endl;
+      << "\t\tCutoff: " << small_blind << "\t\tChips: " << cur_chips << endl;
   out << "Someone raised this turn? " << std::boolalpha << raised << std::dec
       << endl;
   for (uid_t uid = 1; uid <= LastPlayer(); ++uid) {

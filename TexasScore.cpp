@@ -23,12 +23,10 @@ int one_pair(const cardarr_t &cards);
 int high_card(const cardarr_t &cards);
 
 int _compare(const int a, const int b);
-int _for_each_combination(std::function<int(const cardarr_t)> &lambda,
-                          const cardarr_t &cards);
 } // namespace
 
 const Dummy::score_t poker::_score(cardarr_t cards) {
-  std::sort(cards.begin(), cards.end(), [](int a, int b) { return a > b; });
+  std::sort(cards.begin(), cards.end(), std::greater<int>());
   // 1. Royal Straight Flush
   // 2. Straight Flush
   // 3. Four of a kind
@@ -55,28 +53,54 @@ const Dummy::score_t Dummy::Score(const uid_t uid) {
   // TODO: Record the winner cards into attribute?
   auto cards = holecards[uid];
   cards.insert(cards.end(), board.begin(), board.end());
-  return poker::_score(cards);
+  const auto len = cards.size();
+  assert(len == 7);
+
+  CardScore ret{0};
+  std::vector<cardarr_t> combinations(21, cardarr_t());
+  {
+    // Generate combinations.
+    int idx = 0;
+    for (int i = 0; i < 3; ++i)
+      for (int j = i + 1; j < 4; ++j)
+        for (int k = j + 1; k < 5; ++k)
+          for (int l = k + 1; l < 6; ++l)
+            for (int m = l + 1; m < 7; ++m) {
+              combinations[idx].push_back(cards[i]);
+              combinations[idx].push_back(cards[j]);
+              combinations[idx].push_back(cards[k]);
+              combinations[idx].push_back(cards[l]);
+              combinations[idx].push_back(cards[m]);
+              ++idx;
+            }
+  }
+  for (const auto &com : combinations) {
+    const auto candidate = poker::_score(com);
+    if (candidate.Compare(ret))
+      ret = candidate;
+  }
+  return ret;
 }
 
 int CardScore::Compare(const CardScore &rhs) const {
   int ret;
-  if ((ret = _compare(royal_straight_flush, rhs.royal_straight_flush)))
+  if (ret = _compare(royal_straight_flush, rhs.royal_straight_flush); ret)
     return ret;
-  if ((ret = _compare(straight_flush, rhs.straight_flush)))
+  if (ret = _compare(straight_flush, rhs.straight_flush); ret)
     return ret;
-  if ((ret = _compare(four_of_a_kind, rhs.four_of_a_kind)))
+  if (ret = _compare(four_of_a_kind, rhs.four_of_a_kind); ret)
     return ret;
-  if ((ret = _compare(full_house, rhs.full_house)))
+  if (ret = _compare(full_house, rhs.full_house); ret)
     return ret;
-  if ((ret = _compare(flush, rhs.flush)))
+  if (ret = _compare(flush, rhs.flush); ret)
     return ret;
-  if ((ret = _compare(straight, rhs.straight)))
+  if (ret = _compare(straight, rhs.straight); ret)
     return ret;
-  if ((ret = _compare(three_of_a_kind, rhs.three_of_a_kind)))
+  if (ret = _compare(three_of_a_kind, rhs.three_of_a_kind); ret)
     return ret;
-  if ((ret = _compare(two_pair, rhs.two_pair)))
+  if (ret = _compare(two_pair, rhs.two_pair); ret)
     return ret;
-  if ((ret = _compare(one_pair, rhs.one_pair)))
+  if (ret = _compare(one_pair, rhs.one_pair); ret)
     return ret;
   return _compare(high_card, rhs.high_card);
 }
@@ -214,28 +238,4 @@ int _compare(const int a, const int b) {
   return -1;
 }
 
-int _for_each_combination(std::function<int(const cardarr_t)> &lambda,
-                          const cardarr_t &cards) {
-  const auto len = cards.size();
-  assert(len == 7);
-
-  int ret = 0, idx = 0;
-  std::vector<cardarr_t> combinations(21, cardarr_t());
-  for (int i = 0; i < 3; ++i)
-    for (int j = i + 1; j < 4; ++j)
-      for (int k = j + 1; k < 5; ++k)
-        for (int l = k + 1; l < 6; ++l)
-          for (int m = l + 1; m < 7; ++m) {
-            combinations[idx].push_back(cards[i]);
-            combinations[idx].push_back(cards[j]);
-            combinations[idx].push_back(cards[k]);
-            combinations[idx].push_back(cards[l]);
-            combinations[idx].push_back(cards[m]);
-            ++idx;
-          }
-  for (const auto &com : combinations)
-    ret = std::max(ret, lambda(com));
-
-  return ret;
-}
 } // namespace
