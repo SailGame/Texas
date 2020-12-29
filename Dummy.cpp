@@ -49,7 +49,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
 
         // Liquidation
         chip_t total_chips = 0;
-        for(uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+        for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
           total_chips += roundbets[uid];
           bankroll[uid] -= roundbets[uid];
         }
@@ -90,10 +90,10 @@ const Dummy::uid_t Dummy::Evaluate() {
     return 0;
 
   uid_t winner = 0;
-  int top_score = 0;
+  score_t top_score;
   for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-    int cur_score = Score(uid);
-    if (cur_score > top_score) {
+    score_t cur_score = Score(uid);
+    if (cur_score.Compare(top_score) == 1) {
       top_score = cur_score;
       winner = uid;
     }

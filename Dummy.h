@@ -1,9 +1,13 @@
+#ifndef SAILGAME_TEXAS
+#define SAILGAME_TEXAS
+
 #include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
 
 struct GameStatus;
+struct CardScore;
 
 class Dummy {
 public:
@@ -11,6 +15,7 @@ public:
   using chip_t = int;
   using card_t = int;
   using status_t = int;
+  using score_t = CardScore;
 
   enum { STOP = -1, READY = 0, NOT_YOUR_TURN = 1, INVALID_BET = 2 };
 
@@ -47,7 +52,7 @@ public:
   const uid_t LastPlayer() const { return user_count; }
 
 private:
-  const int Score(const uid_t uid);
+  const score_t Score(const uid_t uid);
   const uid_t Evaluate();
   void ResetGame();
   void NextCard(uid_t uid);
@@ -61,6 +66,21 @@ struct GameStatus {
   GameStatus(Dummy::status_t state = 0) : state(state) {}
 };
 
+struct CardScore {
+  int royal_straight_flush;
+  int straight_flush;
+  int four_of_a_kind;
+  int full_house;
+  int flush;
+  int straight;
+  int three_of_a_kind;
+  int two_pair;
+  int one_pair;
+  int high_card;
+
+  int Compare(const CardScore &rhs) const;
+};
+
 namespace poker {
 
 // clang-format off
@@ -71,4 +91,7 @@ namespace poker {
     C1 = 0x41, C2, C3, C4, C5, C6, C7, C8, C9, C10, CJ, CQ, CK  // Clubs
   };
 // clang-format on
+
 }; // namespace poker
+
+#endif
