@@ -11,12 +11,12 @@ class DummyBackdoor;
 
 class Dummy {
 public:
-  enum class GameSignal { STOP, READY, NOT_YOUR_TURN, INVALID_BET };
+  enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET };
 
   using uid_t = int;
   using chip_t = int;
   using card_t = int;
-  using status_t = GameSignal;
+  using status_t = int;
   using score_t = CardScore;
 
   friend class DummyBackdoor;
@@ -37,7 +37,7 @@ private:
 
 public:
   explicit Dummy()
-      : state(GameSignal::STOP), user_count(0), prev_pos(-1), button(-1),
+      : state(STOP), user_count(0), prev_pos(-1), button(-1),
         prev_winner(-1), small_blind(-1), cur_chips(-1), raised(false) {}
 
   const status_t Begin();

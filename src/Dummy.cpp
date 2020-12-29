@@ -15,16 +15,16 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
 }
 
 const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
-  if (state != GameSignal::READY)
+  if (state != READY)
     return state;
 
   if (uid != prev_pos + 1)
     // Not the turn for the user of @uid.
-    return GameSignal::NOT_YOUR_TURN;
+    return NOT_YOUR_TURN;
 
   if (bet < cur_chips && bet != -1)
     // Invalid chip @bet given.
-    return GameSignal::INVALID_BET;
+    return INVALID_BET;
 
   if (bet == -1) {
     // Someone choose to drop.
@@ -71,7 +71,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   while (alive_count > 1) {
     if (++prev_pos == LastPlayer())
       prev_pos = FirstPlayer() - 1;
-    if (alive[prev_pos])
+    if (alive[prev_pos+1])
       break;
   }
 
@@ -88,7 +88,7 @@ const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
 const Dummy::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
-  if (state == GameSignal::STOP)
+  if (state == STOP)
     ResetGame();
 
   return state;
@@ -111,7 +111,7 @@ void Dummy::Evaluate() {
       winner = uid;
     }
   }
-  state = GameSignal::STOP;
+  state = STOP;
   assert(winner);
 
   // Liquidation
@@ -123,8 +123,6 @@ void Dummy::Evaluate() {
   bankroll[winner] += total_chips;
 
   prev_winner = winner;
-  for (auto &ent : alive)
-    ent.second = 0;
 }
 
 void Dummy::ResetGame() {
@@ -137,7 +135,7 @@ void Dummy::ResetGame() {
     e.second = 0;
   board.resize(0);
 
-  state = GameSignal::READY;
+  state = READY;
   if (++button > LastPlayer())
     button = 1;
   prev_pos = button;
@@ -146,9 +144,11 @@ void Dummy::ResetGame() {
     small_blind = 1;
   cur_chips = 0;
 
-  for (auto &ent : alive)
+  alive_count = 0;
+  for (auto &ent : alive) {
     ent.second = (bankroll[ent.first] > 0);
-  alive_count = user_count;
+    alive_count += ent.second;
+  }
 
   for (auto &ent : allin)
     ent.second = 0;
