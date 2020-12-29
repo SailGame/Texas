@@ -1,9 +1,7 @@
-SCORE_TEST_TARGET=TexasScoreTest
+CPPFLAGS = --std=c++17
+VPATH = src:./src
 
-all:
-	$(CXX) --std=c++17 Dummy.cpp main.cpp TexasScore.cpp
-
-test_score:
-	$(CXX) --std=c++17 -o $(SCORE_TEST_TARGET) TexasScoreTest.cpp TexasScore.cpp
-	./$(SCORE_TEST_TARGET)
+test_score: TexasScore.o TexasScoreTest.o
+	$(CXX) -o $@ $^
+	./$@
 
