@@ -71,7 +71,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   while (alive_count > 1) {
     if (++prev_pos == LastPlayer())
       prev_pos = FirstPlayer() - 1;
-    if (alive[prev_pos+1])
+    if (alive[prev_pos + 1])
       break;
   }
 

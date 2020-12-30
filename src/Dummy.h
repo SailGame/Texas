@@ -37,8 +37,8 @@ private:
 
 public:
   explicit Dummy()
-      : state(STOP), user_count(0), prev_pos(-1), button(-1),
-        prev_winner(-1), small_blind(-1), cur_chips(-1), raised(false) {}
+      : state(STOP), user_count(0), prev_pos(-1), button(-1), prev_winner(-1),
+        small_blind(-1), cur_chips(-1), raised(false) {}
 
   const status_t Begin();
   const uid_t Join(const std::string &addr);

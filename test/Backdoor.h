@@ -1,7 +1,7 @@
 #ifndef SAILGAME_TEXAS_BACKDOOR
 #define SAILGAME_TEXAS_BACKDOOR
 
-#include "Dummy.h"
+#include "../src/Dummy.h"
 #include <iosfwd>
 
 class DummyBackdoor {
