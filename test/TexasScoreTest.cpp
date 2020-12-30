@@ -1,6 +1,6 @@
-#include "../src/TexasScore.h"
-#include "../src/Dummy.h"
 #include <gtest/gtest.h>
+#include <src/Dummy.h>
+#include <src/TexasScore.h>
 
 using namespace poker;
 

@@ -1,8 +1,11 @@
-aux_source_directory(. TEST_DIR)
-aux_source_directory(../src TEST_DIR)
+project(texas_test)
 
-add_executable(texas_test ${TEST_DIR})
-target_link_libraries(texas_test PRIVATE gtest)
+aux_source_directory(. TEST_DIR)
+
+add_executable(${PROJECT_NAME} ${TEST_DIR})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE gtest)
+target_link_libraries(${PROJECT_NAME} PRIVATE tcore)
 
 include(GoogleTest)
-gtest_add_tests(texas_test "" AUTO)
+gtest_add_tests(${PROJECT_NAME} "" AUTO)

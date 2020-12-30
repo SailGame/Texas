@@ -1,3 +1,3 @@
-aux_source_directory(. APP_DIR)
+add_library(tcore OBJECT Dummy.cpp Dummy.h TexasScore.cpp TexasScore.h)
 
-add_executable(texas ${APP_DIR})
+target_include_directories(tcore PUBLIC ..)

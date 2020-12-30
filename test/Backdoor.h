@@ -1,8 +1,8 @@
 #ifndef SAILGAME_TEXAS_BACKDOOR
 #define SAILGAME_TEXAS_BACKDOOR
 
-#include "../src/Dummy.h"
 #include <iosfwd>
+#include <src/Dummy.h>
 
 class DummyBackdoor {
 public:
