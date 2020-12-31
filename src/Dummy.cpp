@@ -4,6 +4,7 @@
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
+#define MIN_ROUND_PLAYER_NUM 4
 
 const Dummy::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
@@ -18,7 +19,7 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   if (state != READY)
     return state;
 
-  if (uid != prev_pos + 1)
+  if (uid != next_pos)
     // Not the turn for the user of @uid.
     return NOT_YOUR_TURN;
 
@@ -68,12 +69,8 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
     }
   }
 
-  while (alive_count > 1) {
-    if (++prev_pos == LastPlayer())
-      prev_pos = FirstPlayer() - 1;
-    if (alive[prev_pos + 1])
-      break;
-  }
+  if (next_pos = NextPlayer(next_pos, true); !next_pos)
+    state = STOP;
 
   return state;
 }
@@ -88,6 +85,8 @@ const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
 const Dummy::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
+  if (user_count < MIN_ROUND_PLAYER_NUM)
+    return INVALID_PLAYER_NUM;
   if (state == STOP)
     ResetGame();
 
@@ -135,23 +134,26 @@ void Dummy::ResetGame() {
     e.second = 0;
   board.resize(0);
 
-  state = READY;
-  if (++button > LastPlayer())
-    button = 1;
-  prev_pos = button;
-  small_blind = prev_pos + 1;
-  if (small_blind > LastPlayer())
-    small_blind = 1;
-  cur_chips = 0;
-
   alive_count = 0;
   for (auto &ent : alive) {
     ent.second = (bankroll[ent.first] > 0);
     alive_count += ent.second;
   }
+  if (alive_count < MIN_ROUND_PLAYER_NUM)
+    return;
+
+  button = NextPlayer(button, 1);
+  assert(button);
+  small_blind = button + 1;
+  next_pos = small_blind;
+  if (small_blind > LastPlayer())
+    small_blind = 1;
+  cur_chips = 0;
 
   for (auto &ent : allin)
     ent.second = 0;
+
+  state = READY;
 
   // 2. shuffle;
   Shuffle();
@@ -163,9 +165,8 @@ void Dummy::ResetGame() {
   }
 
   // 4. Preflop
-  prev_pos = small_blind - 1;
-  Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 1);
-  Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 2);
+  Play(next_pos, 1);
+  Play(next_pos, 2);
   raised = false;
 }
 
@@ -199,4 +200,20 @@ void Dummy::Shuffle() {
 
   auto rng = std::default_random_engine{};
   std::shuffle(deck.begin(), deck.end(), rng);
+}
+
+const Dummy::uid_t Dummy::NextPlayer(uid_t uid, bool bAlive) const {
+  // When @alive is true, return the next living player, or 0 for none alive.
+  if (bAlive && alive_count == 0)
+    return 0;
+  const auto mask = !bAlive;
+  int cnt = user_count;
+  while (cnt--) {
+    if (++uid > LastPlayer())
+      uid = FirstPlayer();
+    if (alive.at(uid) || mask)
+      return uid;
+  }
+  // Should never reach this.
+  assert(0);
 }

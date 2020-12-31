@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-void DummyBackdoor::DumpDebugMessages(const Dummy &dm, std::ostream &out) {
+void DummyBackdoor::DumpDebugMessages(std::ostream &out) const {
   using namespace std;
   const string divider(30, '=');
   out << divider << endl;
@@ -16,7 +16,7 @@ void DummyBackdoor::DumpDebugMessages(const Dummy &dm, std::ostream &out) {
   for (auto const card : dm.deck)
     out << card << ' ';
   out << std::dec << '[' << dm.deck.size() << ']' << endl;
-  out << "Previous pos: " << dm.prev_pos << "\t\tButton pos: " << dm.button
+  out << "Previous pos: " << dm.next_pos << "\t\tButton pos: " << dm.button
       << "\t\tCutoff: " << dm.small_blind << "\t\tChips: " << dm.cur_chips
       << endl;
   out << "Someone raised this turn? " << std::boolalpha << dm.raised << std::dec
@@ -36,12 +36,17 @@ void DummyBackdoor::DumpDebugMessages(const Dummy &dm, std::ostream &out) {
   out << divider << endl;
 }
 
-void DummyBackdoor::SetDeck(Dummy &dm, const std::vector<Dummy::card_t> &deck) {
+std::ostream &operator<<(std::ostream &out, const DummyBackdoor &dbd) {
+  dbd.DumpDebugMessages(out);
+  return out;
+}
+
+void DummyBackdoor::SetDeck(const std::vector<Dummy::card_t> &deck) {
   dm.deck.resize(0);
   dm.deck.insert(dm.deck.end(), deck.begin(), deck.end());
 }
 
-void DummyBackdoor::RedealCards(Dummy &dm) {
+void DummyBackdoor::RedealCards() {
   for (auto &player : dm.holecards) {
     player.second.resize(0);
     dm.NextCard(player.first);

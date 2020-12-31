@@ -19,7 +19,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 94); // 1011110
+    EXPECT_EQ(ret.high_card, 0b1011110);
   }
   {
     // One-pair
@@ -34,7 +34,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 2);
-    EXPECT_EQ(ret.high_card, 54); // 110110
+    EXPECT_EQ(ret.high_card, 0b110110);
   }
   {
     // two-pair
@@ -49,7 +49,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0x42);
     EXPECT_EQ(ret.one_pair, 4);
-    EXPECT_EQ(ret.high_card, 22); // 10110
+    EXPECT_EQ(ret.high_card, 0b10110);
   }
   {
     // three of a kind
@@ -64,7 +64,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 2);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 22); // 10110
+    EXPECT_EQ(ret.high_card, 0b10110);
   }
   {
     // straight (1-2-3-4-5)
@@ -79,7 +79,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 62); // 111110
+    EXPECT_EQ(ret.high_card, 0b111110);
   }
   {
     // straight (10-J-Q-K-A)
@@ -94,7 +94,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 15362); // 11110000000010
+    EXPECT_EQ(ret.high_card, 0b11110000000010);
   }
   {
     // flush
@@ -104,12 +104,12 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.straight_flush, 0);
     EXPECT_EQ(ret.four_of_a_kind, 0);
     EXPECT_EQ(ret.full_house, 0);
-    EXPECT_EQ(ret.flush, 94); // 1011110
+    EXPECT_EQ(ret.flush, 0b1011110);
     EXPECT_EQ(ret.straight, 0);
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 94); // same as flush
+    EXPECT_EQ(ret.high_card, 0b1011110);
   }
   {
     // full-house
@@ -124,7 +124,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 1);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 2);
-    EXPECT_EQ(ret.high_card, 6); // 110
+    EXPECT_EQ(ret.high_card, 0b110);
   }
   {
     // four of a kind
@@ -139,7 +139,7 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 6); // 110
+    EXPECT_EQ(ret.high_card, 0b110);
   }
   {
     // straight-flush
@@ -149,12 +149,12 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.straight_flush, 5);
     EXPECT_EQ(ret.four_of_a_kind, 0);
     EXPECT_EQ(ret.full_house, 0);
-    EXPECT_EQ(ret.flush, 62); // 111110
+    EXPECT_EQ(ret.flush, 0b111110);
     EXPECT_EQ(ret.straight, 5);
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 62); // same as flush
+    EXPECT_EQ(ret.high_card, 0b111110);
   }
   {
     // royal-straight-flush
@@ -164,12 +164,12 @@ TEST(ScoreTest, ScoreEvaluation) {
     EXPECT_EQ(ret.straight_flush, 14);
     EXPECT_EQ(ret.four_of_a_kind, 0);
     EXPECT_EQ(ret.full_house, 0);
-    EXPECT_EQ(ret.flush, 15362); // 11110000000010
+    EXPECT_EQ(ret.flush, 0b11110000000010);
     EXPECT_EQ(ret.straight, 14);
     EXPECT_EQ(ret.three_of_a_kind, 0);
     EXPECT_EQ(ret.two_pair, 0);
     EXPECT_EQ(ret.one_pair, 0);
-    EXPECT_EQ(ret.high_card, 15362); // same as flush
+    EXPECT_EQ(ret.high_card, 0b11110000000010);
   }
 }
 

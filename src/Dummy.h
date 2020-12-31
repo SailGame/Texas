@@ -11,7 +11,7 @@ class DummyBackdoor;
 
 class Dummy {
 public:
-  enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET };
+  enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
 
   using uid_t = int;
   using chip_t = int;
@@ -31,14 +31,14 @@ private:
 
   status_t state;
   int user_count, alive_count;
-  uid_t prev_pos, button, prev_winner, small_blind;
+  uid_t next_pos, button, prev_winner, small_blind;
   chip_t cur_chips;
   bool raised;
 
 public:
   explicit Dummy()
-      : state(STOP), user_count(0), prev_pos(-1), button(-1), prev_winner(-1),
-        small_blind(-1), cur_chips(-1), raised(false) {}
+      : state(STOP), user_count(0), next_pos(0), button(0), prev_winner(0),
+        small_blind(0), cur_chips(0), raised(false) {}
 
   const status_t Begin();
   const uid_t Join(const std::string &addr);
@@ -59,6 +59,7 @@ private:
   void Evaluate();
   void ResetGame();
   void NextCard(uid_t uid);
+  const uid_t NextPlayer(uid_t uid, bool alive) const;
   void Shuffle();
 };
 

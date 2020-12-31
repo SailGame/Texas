@@ -5,11 +5,16 @@
 #include <src/Dummy.h>
 
 class DummyBackdoor {
+  Dummy &dm;
+
 public:
-  void DumpDebugMessages(const Dummy &dm, std::ostream &out);
-  void SetDeck(Dummy &dm, const std::vector<Dummy::card_t> &deck);
-  void RedealCards(Dummy &dm);
-  int CountPlayers(const Dummy &dm) { return dm.user_count; }
+  explicit DummyBackdoor(Dummy &dm) : dm(dm) {}
+
+  void DumpDebugMessages(std::ostream &out) const;
+
+  void SetDeck(const std::vector<Dummy::card_t> &deck);
+  void RedealCards();
+  int CountPlayers() { return dm.user_count; }
 };
 
 #endif
