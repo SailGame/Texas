@@ -10,6 +10,8 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
   uid2addr.emplace(LastPlayer(), addr);
   holecards.emplace(LastPlayer(), std::vector<card_t>());
+  bankroll.emplace(LastPlayer(), 0);
+  roundbets.emplace(LastPlayer(), 0);
   alive.emplace(LastPlayer(), 0);
   allin.emplace(LastPlayer(), 0);
   return LastPlayer();
