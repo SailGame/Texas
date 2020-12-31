@@ -30,4 +30,6 @@
 *.exe
 *.out
 *.app
-TexasScoreTest
+test_*
+
+build/*

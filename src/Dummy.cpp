@@ -4,25 +4,35 @@
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
+#define MIN_ROUND_PLAYER_NUM 4
 
 const Dummy::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
   uid2addr.emplace(LastPlayer(), addr);
   holecards.emplace(LastPlayer(), std::vector<card_t>());
+  alive.emplace(LastPlayer(), 0);
+  allin.emplace(LastPlayer(), 0);
   return LastPlayer();
 }
 
 const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
-  if (state != GameSignal::READY)
+  if (state != READY)
     return state;
 
-  if (uid != prev_pos + 1)
+  if (uid != next_pos)
     // Not the turn for the user of @uid.
-    return GameSignal::NOT_YOUR_TURN;
+    return NOT_YOUR_TURN;
 
   if (bet < cur_chips && bet != -1)
     // Invalid chip @bet given.
-    return GameSignal::INVALID_BET;
+    return INVALID_BET;
+
+  if (bet == -1) {
+    // Someone choose to drop.
+    alive[uid] = 0;
+    if (--alive_count == 1)
+      Evaluate();
+  }
 
   if (bet > cur_chips) {
     // Raise
@@ -30,6 +40,11 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
     cur_chips = bet;
   }
   roundbets[uid] = bet;
+  if (bet == bankroll[uid]) {
+    // Denotes an all-in
+    alive[uid] = 0;
+    allin[uid] = 1;
+  }
 
   if (uid == small_blind) {
     if (raised) {
@@ -48,30 +63,20 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
         NextCard(-1);
       } else {
         // Evaluate the winner.
-        prev_winner = Evaluate();
-
-        // Liquidation
-        chip_t total_chips = 0;
-        for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-          total_chips += roundbets[uid];
-          bankroll[uid] -= roundbets[uid];
-        }
-        bankroll[uid] += total_chips;
-
+        Evaluate();
         return state;
       }
     }
   }
 
-  if (++prev_pos == LastPlayer())
-    prev_pos = FirstPlayer() - 1;
+  if (next_pos = NextPlayer(next_pos, true); !next_pos)
+    state = STOP;
 
   return state;
 }
 
 const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
   GameStatus ret(state);
-  ret.chips = chips;
   ret.board = board;
   ret.personal = holecards.at(uid);
   return ret;
@@ -80,50 +85,75 @@ const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
 const Dummy::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
-  if (state == GameSignal::STOP)
+  if (user_count < MIN_ROUND_PLAYER_NUM)
+    return INVALID_PLAYER_NUM;
+  if (state == STOP)
     ResetGame();
 
   return state;
 }
 
-const Dummy::uid_t Dummy::Evaluate() {
+void Dummy::Evaluate() {
   // Evaluate the game to determine the winner.
 
-  if (board.size() != 5)
-    return 0;
+  const auto len = board.size();
+  assert(len == MAX_BOARD_SIZE);
 
   uid_t winner = 0;
   score_t top_score;
   for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+    if (!alive[uid] && !allin[uid])
+      continue;
     score_t cur_score = Score(uid);
     if (cur_score.Compare(top_score) == 1) {
       top_score = cur_score;
       winner = uid;
     }
   }
-  state = GameSignal::STOP;
-  return winner;
+  state = STOP;
+  assert(winner);
+
+  // Liquidation
+  chip_t total_chips = 0;
+  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+    total_chips += roundbets[uid];
+    bankroll[uid] -= roundbets[uid];
+  }
+  bankroll[winner] += total_chips;
+
+  prev_winner = winner;
 }
 
 void Dummy::ResetGame() {
   // *Not* to initialize the whole game engine.
 
   // 1. reset game status;
-  chips.resize(0);
   for (auto &e : holecards)
     e.second.resize(0);
   for (auto &e : roundbets)
     e.second = 0;
   board.resize(0);
 
-  state = GameSignal::READY;
-  if (++button > LastPlayer())
-    button = 1;
-  prev_pos = button;
-  small_blind = prev_pos + 1;
+  alive_count = 0;
+  for (auto &ent : alive) {
+    ent.second = (bankroll[ent.first] > 0);
+    alive_count += ent.second;
+  }
+  if (alive_count < MIN_ROUND_PLAYER_NUM)
+    return;
+
+  button = NextPlayer(button, 1);
+  assert(button);
+  small_blind = button + 1;
+  next_pos = small_blind;
   if (small_blind > LastPlayer())
     small_blind = 1;
   cur_chips = 0;
+
+  for (auto &ent : allin)
+    ent.second = 0;
+
+  state = READY;
 
   // 2. shuffle;
   Shuffle();
@@ -135,9 +165,8 @@ void Dummy::ResetGame() {
   }
 
   // 4. Preflop
-  prev_pos = small_blind - 1;
-  Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 1);
-  Play(prev_pos + 1 > LastPlayer() ? 1 : prev_pos + 1, 2);
+  Play(next_pos, 1);
+  Play(next_pos, 2);
   raised = false;
 }
 
@@ -173,33 +202,18 @@ void Dummy::Shuffle() {
   std::shuffle(deck.begin(), deck.end(), rng);
 }
 
-const void Dummy::DumpDebugMessages(std::ostream &out) {
-  using namespace std;
-  const string divider(30, '=');
-  out << divider << endl;
-  out << "State: " << static_cast<int>(state)
-      << "\t\tThe number of players: " << user_count
-      << "\t\tBoard: " << std::hex;
-  for (auto const card : board)
-    out << card << ' ';
-  out << std::dec << '[' << board.size() << ']' << endl;
-  out << "Deck: " << std::hex;
-  for (auto const card : deck)
-    out << card << ' ';
-  out << std::dec << '[' << deck.size() << ']' << endl;
-  out << "Previous pos: " << prev_pos << "\t\tButton pos: " << button
-      << "\t\tCutoff: " << small_blind << "\t\tChips: " << cur_chips << endl;
-  out << "Someone raised this turn? " << std::boolalpha << raised << std::dec
-      << endl;
-  for (uid_t uid = 1; uid <= LastPlayer(); ++uid) {
-    out << endl;
-    out << "\t[" << uid2addr[uid] << "]\tuid: " << uid << endl;
-    out << "\tholecards: " << std::hex;
-    for (auto const card : holecards[uid])
-      out << card << ' ';
-    out << std::dec << endl;
-    out << "\tbankroll: " << bankroll[uid] << endl;
-    out << "\troundbets: " << roundbets[uid] << endl;
+const Dummy::uid_t Dummy::NextPlayer(uid_t uid, bool bAlive) const {
+  // When @alive is true, return the next living player, or 0 for none alive.
+  if (bAlive && alive_count == 0)
+    return 0;
+  const auto mask = !bAlive;
+  int cnt = user_count;
+  while (cnt--) {
+    if (++uid > LastPlayer())
+      uid = FirstPlayer();
+    if (alive.at(uid) || mask)
+      return uid;
   }
-  out << divider << endl;
+  // Should never reach this.
+  assert(0);
 }

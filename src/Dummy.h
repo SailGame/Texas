@@ -1,51 +1,54 @@
 #ifndef SAILGAME_TEXAS
 #define SAILGAME_TEXAS
 
-#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
 
 struct GameStatus;
 struct CardScore;
+class DummyBackdoor;
 
 class Dummy {
 public:
-  enum class GameSignal { STOP, READY, NOT_YOUR_TURN, INVALID_BET };
+  enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
 
   using uid_t = int;
   using chip_t = int;
   using card_t = int;
-  using status_t = GameSignal;
+  using status_t = int;
   using score_t = CardScore;
+
+  friend class DummyBackdoor;
 
 private:
   std::map<uid_t, const std::string> uid2addr;
 
-  std::vector<chip_t> chips;
-
   std::map<uid_t, std::vector<card_t>> holecards;
   std::map<uid_t, chip_t> bankroll, roundbets;
+  std::map<uid_t, int> alive, allin;
   std::vector<card_t> board, deck;
 
   status_t state;
-  int user_count;
-  uid_t prev_pos, button, prev_winner, small_blind;
+  int user_count, alive_count;
+  uid_t next_pos, button, prev_winner, small_blind;
   chip_t cur_chips;
   bool raised;
 
 public:
   explicit Dummy()
-      : state(GameSignal::STOP), user_count(0), prev_pos(-1), button(-1),
-        prev_winner(-1), small_blind(-1), cur_chips(-1), raised(false) {}
+      : state(STOP), user_count(0), next_pos(0), button(0), prev_winner(0),
+        small_blind(0), cur_chips(0), raised(false) {}
 
   const status_t Begin();
   const uid_t Join(const std::string &addr);
   // positive -> raise or call; zero -> check; -1 -> conceed.
   const status_t Play(const uid_t uid, const chip_t value);
+  const chip_t Topup(const uid_t uid, const chip_t value) {
+    return (bankroll[uid] += value);
+  }
 
   const GameStatus DumpStatusForUser(const uid_t uid) const;
-  const void DumpDebugMessages(std::ostream &out);
 
   const uid_t PreviousWinner() const { return prev_winner; }
   const uid_t FirstPlayer() const { return 1; }
@@ -53,14 +56,14 @@ public:
 
 private:
   const score_t Score(const uid_t uid);
-  const uid_t Evaluate();
+  void Evaluate();
   void ResetGame();
   void NextCard(uid_t uid);
+  const uid_t NextPlayer(uid_t uid, bool alive) const;
   void Shuffle();
 };
 
 struct GameStatus {
-  std::vector<Dummy::chip_t> chips;
   std::vector<Dummy::card_t> board, personal;
   Dummy::status_t state;
   explicit GameStatus(Dummy::status_t state) : state(state) {}
