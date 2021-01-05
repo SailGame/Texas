@@ -24,7 +24,7 @@ int high_card(const cardarr_t &cards);
 int _compare(const int a, const int b);
 } // namespace
 
-const Dummy::score_t poker::_score(cardarr_t cards) {
+const texas_defines::score_t poker::_score(cardarr_t cards) {
   std::sort(cards.begin(), cards.end(), std::greater<int>());
   // 1. Royal Straight Flush
   // 2. Straight Flush
@@ -36,26 +36,26 @@ const Dummy::score_t poker::_score(cardarr_t cards) {
   // 8. Two pair
   // 9. One Pair
   // 10. High card
-  return CardScore{royal_straight_flush(cards),
-                   straight_flush(cards),
-                   four_of_a_kind(cards),
-                   full_house(cards),
-                   flush(cards),
-                   straight(cards),
-                   three_of_a_kind(cards),
-                   two_pair(cards),
-                   one_pair(cards),
-                   high_card(cards)};
+  return texas_defines::CardScore{royal_straight_flush(cards),
+                                  straight_flush(cards),
+                                  four_of_a_kind(cards),
+                                  full_house(cards),
+                                  flush(cards),
+                                  straight(cards),
+                                  three_of_a_kind(cards),
+                                  two_pair(cards),
+                                  one_pair(cards),
+                                  high_card(cards)};
 }
 
-const Dummy::score_t Dummy::Score(const uid_t uid) {
+const texas_defines::score_t Dummy::Score(const texas_defines::uid_t uid) {
   // TODO: Record the winner cards into attribute?
   auto cards = holecards[uid];
   cards.insert(cards.end(), board.begin(), board.end());
   const auto len = cards.size();
   assert(len == 7);
 
-  CardScore ret{0};
+  texas_defines::CardScore ret{0};
   std::vector<cardarr_t> combinations(21, cardarr_t());
   {
     // Generate combinations.
@@ -81,7 +81,8 @@ const Dummy::score_t Dummy::Score(const uid_t uid) {
   return ret;
 }
 
-int CardScore::Compare(const CardScore &rhs) const {
+int texas_defines::CardScore::Compare(
+    const texas_defines::CardScore &rhs) const {
   int ret;
   if (ret = _compare(royal_straight_flush, rhs.royal_straight_flush); ret)
     return ret;

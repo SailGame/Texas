@@ -6,10 +6,10 @@
 #define FLOP_BOARD_SIZE 3
 #define MIN_ROUND_PLAYER_NUM 4
 
-const Dummy::uid_t Dummy::Join(const std::string &addr) {
+const texas_defines::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
   uid2addr.emplace(LastPlayer(), addr);
-  holecards.emplace(LastPlayer(), std::vector<card_t>());
+  holecards.emplace(LastPlayer(), std::vector<texas_defines::card_t>());
   bankroll.emplace(LastPlayer(), 0);
   roundbets.emplace(LastPlayer(), 0);
   alive.emplace(LastPlayer(), 0);
@@ -17,7 +17,8 @@ const Dummy::uid_t Dummy::Join(const std::string &addr) {
   return LastPlayer();
 }
 
-const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
+const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
+                                          const texas_defines::chip_t bet) {
   if (state != READY)
     return state;
 
@@ -77,14 +78,15 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
   return state;
 }
 
-const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
-  GameStatus ret(state);
+const texas_defines::GameStatus
+Dummy::DumpStatusForUser(const texas_defines::uid_t uid) const {
+  texas_defines::GameStatus ret(state);
   ret.board = board;
   ret.personal = holecards.at(uid);
   return ret;
 }
 
-const Dummy::status_t Dummy::Begin() {
+const texas_defines::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
   if (user_count < MIN_ROUND_PLAYER_NUM)
@@ -101,12 +103,12 @@ void Dummy::Evaluate() {
   const auto len = board.size();
   assert(len == MAX_BOARD_SIZE);
 
-  uid_t winner = 0;
-  score_t top_score;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+  texas_defines::uid_t winner = 0;
+  texas_defines::score_t top_score;
+  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     if (!alive[uid] && !allin[uid])
       continue;
-    score_t cur_score = Score(uid);
+    texas_defines::score_t cur_score = Score(uid);
     if (cur_score.Compare(top_score) == 1) {
       top_score = cur_score;
       winner = uid;
@@ -116,8 +118,8 @@ void Dummy::Evaluate() {
   assert(winner);
 
   // Liquidation
-  chip_t total_chips = 0;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+  texas_defines::chip_t total_chips = 0;
+  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     total_chips += roundbets[uid];
     bankroll[uid] -= roundbets[uid];
   }
@@ -161,7 +163,7 @@ void Dummy::ResetGame() {
   Shuffle();
 
   // 3. Deal cards;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     NextCard(uid);
     NextCard(uid);
   }
@@ -172,12 +174,12 @@ void Dummy::ResetGame() {
   raised = false;
 }
 
-void Dummy::NextCard(uid_t uid) {
+void Dummy::NextCard(texas_defines::uid_t uid) {
   // Deliver a new card from deck.
   // @uid = -1 => deal to the board;
   // @uid > 0 => deal to certain player.
 
-  const card_t card = deck.back();
+  const auto card = deck.back();
   deck.pop_back();
 
   if (uid == -1) {
@@ -204,7 +206,8 @@ void Dummy::Shuffle() {
   std::shuffle(deck.begin(), deck.end(), rng);
 }
 
-const Dummy::uid_t Dummy::NextPlayer(uid_t uid, bool bAlive) const {
+const texas_defines::uid_t Dummy::NextPlayer(texas_defines::uid_t uid,
+                                             bool bAlive) const {
   // When @alive is true, return the next living player, or 0 for none alive.
   if (bAlive && alive_count == 0)
     return 0;
