@@ -16,11 +16,8 @@ public:
   friend class DummyBackdoor;
 
 private:
-  std::map<texas_defines::uid_t, const std::string> uid2addr;
+  std::map<texas_defines::uid_t, texas_defines::PlayerStat> players;
 
-  std::map<texas_defines::uid_t, std::vector<texas_defines::card_t>> holecards;
-  std::map<texas_defines::uid_t, texas_defines::chip_t> bankroll, roundbets;
-  std::map<texas_defines::uid_t, int> alive, allin;
   std::vector<texas_defines::card_t> board, deck;
 
   texas_defines::status_t state;
@@ -41,7 +38,7 @@ public:
                                      const texas_defines::chip_t value);
   const texas_defines::chip_t Topup(const texas_defines::uid_t uid,
                                     const texas_defines::chip_t value) {
-    return (bankroll[uid] += value);
+    return (players.at(uid).bankroll += value);
   }
 
   const texas_defines::GameStatus

@@ -19,7 +19,8 @@ struct PlayerStat {
   chip_t bankroll, roundbets;
   int alive, allin;
 
-  explicit PlayerStat(const std::string &addr) : addr(addr) {}
+  explicit PlayerStat(const std::string &addr)
+      : addr(addr), bankroll(0), roundbets(0), alive(0), allin(0) {}
 };
 
 struct GameStatus {

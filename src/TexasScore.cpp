@@ -50,7 +50,7 @@ const texas_defines::score_t poker::_score(cardarr_t cards) {
 
 const texas_defines::score_t Dummy::Score(const texas_defines::uid_t uid) {
   // TODO: Record the winner cards into attribute?
-  auto cards = holecards[uid];
+  auto cards = players.at(uid).holecards;
   cards.insert(cards.end(), board.begin(), board.end());
   const auto len = cards.size();
   assert(len == 7);

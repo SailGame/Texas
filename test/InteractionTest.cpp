@@ -40,14 +40,14 @@ TEST(InteractionTest, FromInitToPreflop) {
 
   // Ensure a correct preflop.
   EXPECT_EQ(dm.Begin(), Dummy::READY);
-  for (const auto &ent : dbd.GetHolecards())
-    EXPECT_EQ(ent.second.size(), 2);
+  for (const auto &ent : dbd.GetPlayerStat())
+    EXPECT_EQ(ent.second.holecards.size(), 2);
   EXPECT_EQ(dbd.GetBoard().size(), 0);
 
   // Assume that game initialize with the player of uid 1 being the button.
   // Thus, small-blind is 2, big-blind is 3, the next player to bet is 4.
-  EXPECT_EQ(dbd.GetRoundbets().at(2), 1);
-  EXPECT_EQ(dbd.GetRoundbets().at(3), 2);
+  EXPECT_EQ(dbd.GetPlayerStat().at(2).roundbets, 1);
+  EXPECT_EQ(dbd.GetPlayerStat().at(3).roundbets, 2);
   EXPECT_EQ(dbd.GetCurrentChips(), 2);
 
   EXPECT_EQ(dm.Play(1, 0), Dummy::NOT_YOUR_TURN);
