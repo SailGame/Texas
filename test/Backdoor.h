@@ -15,8 +15,9 @@ public:
 
   void SetDeck(const std::vector<texas_defines::card_t> &deck);
   void RedealCards();
-  int CountPlayers() { return dm.user_count; }
+  int CountPlayers() const { return dm.user_count; }
   auto &GetPlayerStat() { return dm.players; }
+  const texas_defines::uid_t GetPrevWinner() const { return dm.prev_winner; }
   const std::vector<texas_defines::card_t> &GetBoard() const {
     return dm.board;
   }

@@ -75,7 +75,7 @@ const texas_defines::score_t Dummy::Score(const texas_defines::uid_t uid) {
   }
   for (const auto &com : combinations) {
     const auto candidate = poker::_score(com);
-    if (candidate.Compare(ret))
+    if (candidate.Compare(ret) == 1)
       ret = candidate;
   }
   return ret;

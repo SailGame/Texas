@@ -25,26 +25,41 @@ const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
     // Invalid chip @bet given.
     return INVALID_BET;
 
+  if (bet > players.at(uid).bankroll)
+    // No enough chips.
+    return INVALID_BET;
+
   if (bet == -1) {
-    // Someone choose to drop.
+    // Someone drops.
     players.at(uid).alive = 0;
-    if (--alive_count == 1)
-      Evaluate();
+    --alive_count;
+    // It is impossible for the last player to drop.
+    assert(alive_count);
+  } else {
+    if (bet > cur_chips) {
+      // Someone raises.
+      raised = true;
+      last_raised = uid;
+      cur_chips = bet;
+    }
+    players.at(uid).roundbets = bet;
+    if (bet == players.at(uid).bankroll) {
+      // Denotes an all-in
+      players.at(uid).alive = 0;
+      players.at(uid).allin = 1;
+    }
   }
 
-  if (bet > cur_chips) {
-    // Raise
-    raised = true;
-    cur_chips = bet;
-  }
-  players.at(uid).roundbets = bet;
-  if (bet == players.at(uid).bankroll) {
-    // Denotes an all-in
-    players.at(uid).alive = 0;
-    players.at(uid).allin = 1;
+  if (next_pos = NextPlayer(next_pos, true); !next_pos) {
+    state = STOP;
+    while (board.size() < MAX_BOARD_SIZE)
+      NextCard(-1);
+    Evaluate();
+    return state;
   }
 
-  if (uid == small_blind) {
+  if (round_ends) {
+    round_ends = false;
     if (raised) {
       // Someone raised within this turn.
       raised = false;
@@ -66,9 +81,6 @@ const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
       }
     }
   }
-
-  if (next_pos = NextPlayer(next_pos, true); !next_pos)
-    state = STOP;
 
   return state;
 }
@@ -99,7 +111,7 @@ void Dummy::Evaluate() {
   assert(len == MAX_BOARD_SIZE);
 
   texas_defines::uid_t winner = 0;
-  texas_defines::score_t top_score;
+  texas_defines::score_t top_score{0};
   for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     if (!players.at(uid).alive && !players.at(uid).allin)
       continue;
@@ -164,8 +176,11 @@ void Dummy::ResetGame() {
   }
 
   // 4. Preflop
+  round_ends = false;
   Play(next_pos, 1);
+  round_ends = false;
   Play(next_pos, 2);
+  round_ends = false;
   raised = false;
 }
 
@@ -202,18 +217,17 @@ void Dummy::Shuffle() {
 }
 
 const texas_defines::uid_t Dummy::NextPlayer(texas_defines::uid_t uid,
-                                             bool bAlive) const {
+                                             bool bAlive) {
   // When @alive is true, return the next living player, or 0 for none alive.
-  if (bAlive && alive_count == 0)
-    return 0;
   const auto mask = !bAlive;
   int cnt = user_count;
   while (cnt--) {
     if (++uid > LastPlayer())
       uid = FirstPlayer();
+    if (uid == last_raised)
+      round_ends = true;
     if (players.at(uid).alive || mask)
       return uid;
   }
-  // Should never reach this.
-  assert(0);
+  return 0;
 }
