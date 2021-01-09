@@ -27,7 +27,7 @@ TEST(InteractionTest, FromInitToPreflop) {
   ASSERT_EQ(dm.Play(4, 0), Dummy::STOP);
 
   // Can not start game without top-up.
-  ASSERT_EQ(dm.Begin(), Dummy::STOP);
+  ASSERT_EQ(dm.Begin(), Dummy::INVALID_PLAYER_NUM);
 
   ASSERT_EQ(dm.Play(1, 0), Dummy::STOP);
   ASSERT_EQ(dm.Play(2, 0), Dummy::STOP);

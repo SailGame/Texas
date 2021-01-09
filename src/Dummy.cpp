@@ -4,7 +4,7 @@
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
-#define MIN_ROUND_PLAYER_NUM 4
+#define MIN_ROUND_PLAYER_NUM 3
 
 const texas_defines::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
@@ -96,7 +96,13 @@ Dummy::DumpStatusForUser(const texas_defines::uid_t uid) const {
 const texas_defines::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
-  if (user_count < MIN_ROUND_PLAYER_NUM)
+  alive_count = 0;
+  for (auto &e : players) {
+    e.second.alive = (e.second.bankroll > 0);
+    alive_count += e.second.alive;
+  }
+
+  if (alive_count < MIN_ROUND_PLAYER_NUM)
     return INVALID_PLAYER_NUM;
   if (state == STOP)
     ResetGame();
@@ -144,14 +150,6 @@ void Dummy::ResetGame() {
     e.second.roundbets = 0;
   }
   board.resize(0);
-
-  alive_count = 0;
-  for (auto &e : players) {
-    e.second.alive = (e.second.bankroll > 0);
-    alive_count += e.second.alive;
-  }
-  if (alive_count < MIN_ROUND_PLAYER_NUM)
-    return;
 
   button = NextPlayer(button, 1);
   assert(button);
