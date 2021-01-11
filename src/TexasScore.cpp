@@ -1,5 +1,6 @@
 #include "TexasScore.h"
 
+#include <cassert>
 #include <functional>
 #include <map>
 #include <vector>

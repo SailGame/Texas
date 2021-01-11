@@ -1,5 +1,6 @@
 #include "Dummy.h"
 #include <algorithm>
+#include <cassert>
 #include <random>
 
 #define MAX_BOARD_SIZE 5
