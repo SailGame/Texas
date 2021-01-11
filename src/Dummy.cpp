@@ -139,7 +139,7 @@ void Dummy::Evaluate() {
   }
   players.at(winner).bankroll += total_chips;
 
-  prev_winner = winner;
+  winners.push_back(winner);
 }
 
 void Dummy::ResetGame() {

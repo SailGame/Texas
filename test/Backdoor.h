@@ -17,7 +17,9 @@ public:
   void RedealCards();
   int CountPlayers() const { return dm.user_count; }
   auto &GetPlayerStat() { return dm.players; }
-  const texas_defines::uid_t GetPrevWinner() const { return dm.prev_winner; }
+  const std::vector<texas_defines::uid_t> &GetWinners() const {
+    return dm.winners;
+  }
   const std::vector<texas_defines::card_t> &GetBoard() const {
     return dm.board;
   }

@@ -142,7 +142,9 @@ TEST(InteractionTest, Episode1) {
   ASSERT_EQ(board[3], D9);
   ASSERT_EQ(board[4], H9);
   // The winner is Bob with his straight of course.
-  ASSERT_EQ(dbd.GetPrevWinner(), 2);
+  const auto &winners = dbd.GetWinners();
+  ASSERT_EQ(winners.size(), 1);
+  ASSERT_EQ(winners[0], 2);
 
   // Check chip liquidation.
   ASSERT_EQ(players.at(1).bankroll, 0);

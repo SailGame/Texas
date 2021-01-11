@@ -19,17 +19,18 @@ private:
   std::map<texas_defines::uid_t, texas_defines::PlayerStat> players;
 
   std::vector<texas_defines::card_t> board, deck;
+  std::vector<texas_defines::uid_t> winners;
 
   texas_defines::status_t state;
   int user_count, alive_count;
-  texas_defines::uid_t next_pos, button, prev_winner, small_blind, last_raised;
+  texas_defines::uid_t next_pos, button, small_blind, last_raised;
   texas_defines::chip_t cur_chips;
   bool raised, round_ends;
 
 public:
   explicit Dummy()
-      : state(STOP), user_count(0), next_pos(0), button(0), prev_winner(0),
-        small_blind(0), cur_chips(0), raised(false), round_ends(false) {}
+      : state(STOP), user_count(0), next_pos(0), button(0), small_blind(0),
+        cur_chips(0), raised(false), round_ends(false) {}
 
   const texas_defines::status_t Begin();
   const texas_defines::uid_t Join(const std::string &addr);
@@ -44,7 +45,6 @@ public:
   const texas_defines::GameStatus
   DumpStatusForUser(const texas_defines::uid_t uid) const;
 
-  const texas_defines::uid_t PreviousWinner() const { return prev_winner; }
   const texas_defines::uid_t FirstPlayer() const { return 1; }
   const texas_defines::uid_t LastPlayer() const { return user_count; }
 
