@@ -117,19 +117,22 @@ void Dummy::Evaluate() {
   const auto len = board.size();
   assert(len == MAX_BOARD_SIZE);
 
-  texas_defines::uid_t winner = 0;
   texas_defines::score_t top_score{0};
   for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     if (!players.at(uid).alive && !players.at(uid).allin)
       continue;
     texas_defines::score_t cur_score = Score(uid);
-    if (cur_score.Compare(top_score) == 1) {
-      top_score = cur_score;
-      winner = uid;
+    switch(cur_score.Compare(top_score)){
+      case 1: // Greater
+        top_score = cur_score;
+        winners.resize(0);
+        winners.push_back(uid);
+        break;
+      case 0: // Equal
+        winners.push_back(uid);
     }
   }
   state = STOP;
-  assert(winner);
 
   // Liquidation
   texas_defines::chip_t total_chips = 0;
@@ -137,9 +140,10 @@ void Dummy::Evaluate() {
     total_chips += players.at(uid).roundbets;
     players.at(uid).bankroll -= players.at(uid).roundbets;
   }
-  players.at(winner).bankroll += total_chips;
-
-  winners.push_back(winner);
+  assert(winners.size());
+  total_chips /= winners.size();
+  for(const auto &winner : winners)
+    players.at(winner).bankroll += total_chips;
 }
 
 void Dummy::ResetGame() {
