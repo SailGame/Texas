@@ -122,14 +122,14 @@ void Dummy::Evaluate() {
     if (!players.at(uid).alive && !players.at(uid).allin)
       continue;
     texas_defines::score_t cur_score = Score(uid);
-    switch(cur_score.Compare(top_score)){
-      case 1: // Greater
-        top_score = cur_score;
-        winners.resize(0);
-        winners.push_back(uid);
-        break;
-      case 0: // Equal
-        winners.push_back(uid);
+    switch (cur_score.Compare(top_score)) {
+    case 1: // Greater
+      top_score = cur_score;
+      winners.resize(0);
+      winners.push_back(uid);
+      break;
+    case 0: // Equal
+      winners.push_back(uid);
     }
   }
   state = STOP;
@@ -142,7 +142,7 @@ void Dummy::Evaluate() {
   }
   assert(winners.size());
   total_chips /= winners.size();
-  for(const auto &winner : winners)
+  for (const auto &winner : winners)
     players.at(winner).bankroll += total_chips;
 }
 
