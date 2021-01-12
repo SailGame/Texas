@@ -135,15 +135,27 @@ void Dummy::Evaluate() {
   state = STOP;
 
   // Liquidation
-  texas_defines::chip_t total_chips = 0;
-  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-    total_chips += players.at(uid).roundbets;
-    players.at(uid).bankroll -= players.at(uid).roundbets;
-  }
   assert(winners.size());
-  total_chips /= winners.size();
-  for (const auto &winner : winners)
-    players.at(winner).bankroll += total_chips;
+
+  std::vector<bool> win_this_round(user_count + 1, 0);
+  texas_defines::chip_t total_wins = 0;
+  for (const auto &winner : winners) {
+    win_this_round[winner] = 1;
+    total_wins += players.at(winner).roundbets;
+  }
+
+  for (const auto &winner : winners) {
+    const auto winnerbets = players.at(winner).roundbets;
+    auto &winnerbank = players.at(winner).bankroll;
+    for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+      if (win_this_round[uid])
+        continue;
+      const auto value = std::min(
+          players.at(uid).roundbets * winnerbets / total_wins, winnerbets);
+      players.at(uid).bankroll -= value;
+      winnerbank += value;
+    }
+  }
 }
 
 void Dummy::ResetGame() {
