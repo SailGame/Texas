@@ -8,7 +8,7 @@ namespace texas_defines {
 struct CardScore;
 
 using uid_t = int;
-using chip_t = int;
+using chip_t = float;
 using card_t = int;
 using status_t = int;
 using score_t = CardScore;

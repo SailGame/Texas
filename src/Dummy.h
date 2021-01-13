@@ -55,6 +55,7 @@ private:
   void NextCard(texas_defines::uid_t uid);
   const texas_defines::uid_t NextPlayer(texas_defines::uid_t uid, bool alive);
   void Shuffle();
+  void Liquidate();
 };
 
 namespace poker {

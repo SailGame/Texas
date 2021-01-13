@@ -1,7 +1,6 @@
 #ifndef SAILGAME_TEXAS_BACKDOOR
 #define SAILGAME_TEXAS_BACKDOOR
 
-#include <iosfwd>
 #include <src/Dummy.h>
 #include <src/defines.h>
 
@@ -11,15 +10,15 @@ class DummyBackdoor {
 public:
   explicit DummyBackdoor(Dummy &dm) : dm(dm) {}
 
-  // void DumpDebugMessages(std::ostream &out) const;
-
+  // Setters
   void SetDeck(const std::vector<texas_defines::card_t> &deck);
   void RedealCards();
+  void Liquidate() { dm.Liquidate(); }
+
+  // Getters
   int CountPlayers() const { return dm.user_count; }
   auto &GetPlayerStat() { return dm.players; }
-  const std::vector<texas_defines::uid_t> &GetWinners() const {
-    return dm.winners;
-  }
+  std::vector<texas_defines::uid_t> &GetWinners() { return dm.winners; }
   const std::vector<texas_defines::card_t> &GetBoard() const {
     return dm.board;
   }
