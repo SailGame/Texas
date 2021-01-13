@@ -10,12 +10,12 @@ TEST(InteractionTest, FromInitToPreflop) {
   ASSERT_EQ(dbd.CountPlayers(), 0);
 
   ASSERT_EQ(dm.Join("a"), 1);
-  ASSERT_EQ(dm.Join("b"), 2);
 
   // Check the restriction of player number's low bound.
-  ASSERT_EQ(dbd.CountPlayers(), 2);
+  ASSERT_EQ(dbd.CountPlayers(), 1);
   ASSERT_EQ(dm.Begin(), Dummy::INVALID_PLAYER_NUM);
 
+  ASSERT_EQ(dm.Join("b"), 2);
   ASSERT_EQ(dm.Join("c"), 3);
   ASSERT_EQ(dm.Join("d"), 4);
 
@@ -63,6 +63,8 @@ TEST(InteractionTest, FromInitToPreflop) {
 // Remeber the next card comes from the tail of the deck array.
 
 TEST(InteractionTest, Episode1) {
+  // Test a common walkthrough.
+  //
   // 1: H1 C1 <= button
   // 2: H2 H3 <= big blind
   // 3: C2 D5 <= small blind
@@ -83,6 +85,7 @@ TEST(InteractionTest, Episode1) {
   ASSERT_EQ(dm.Topup(3, 10), 10);
   ASSERT_EQ(dm.Topup(4, 10), 10);
   ASSERT_EQ(dm.Begin(), Dummy::READY);
+  ASSERT_EQ(board.size(), 0);
 
   using namespace poker;
 
@@ -151,4 +154,64 @@ TEST(InteractionTest, Episode1) {
   ASSERT_EQ(players.at(2).bankroll, 26);
   ASSERT_EQ(players.at(3).bankroll, 8);
   ASSERT_EQ(players.at(4).bankroll, 6);
+}
+
+TEST(InteractionTest, Episode2) {
+  // Test how dummy behaves with just 2 guys.
+  //
+  // 1: C9 S9 <= button & small blind
+  // 2: H2 H3 <= big blind
+  // B: D9 H9 H4 H5 D6
+
+  Dummy dm;
+  DummyBackdoor dbd(dm);
+  const auto &players = dbd.GetPlayerStat();
+  const auto &board = dbd.GetBoard();
+
+  ASSERT_EQ(dm.Join("Alice"), 1);
+  ASSERT_EQ(dm.Join("Bob"), 2);
+  ASSERT_EQ(dm.Topup(1, 10), 10);
+  ASSERT_EQ(dm.Topup(2, 10), 10);
+  ASSERT_EQ(dm.Begin(), Dummy::READY);
+  ASSERT_EQ(board.size(), 0);
+
+  using namespace poker;
+
+  dbd.SetDeck({D6, H5, H4, H9, D9, H3, H2, S9, C9});
+  dbd.RedealCards();
+
+  ASSERT_EQ(players.at(1).holecards[0], C9);
+  ASSERT_EQ(players.at(1).holecards[1], S9);
+  ASSERT_EQ(players.at(2).holecards[0], H2);
+  ASSERT_EQ(players.at(2).holecards[1], H3);
+
+  ASSERT_EQ(dm.Play(2, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 3);
+  ASSERT_EQ(board[0], D9);
+  ASSERT_EQ(board[1], H9);
+  ASSERT_EQ(board[2], H4);
+
+  ASSERT_EQ(dm.Play(1, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 3);
+  ASSERT_EQ(dm.Play(2, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 4);
+  ASSERT_EQ(board[3], H5);
+
+  ASSERT_EQ(dm.Play(1, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 4);
+  ASSERT_EQ(dm.Play(2, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 5);
+  ASSERT_EQ(board[4], D6);
+
+  const auto &winners = dbd.GetWinners();
+  ASSERT_EQ(winners.size(), 0);
+  ASSERT_EQ(dm.Play(1, 2), Dummy::READY);
+  ASSERT_EQ(board.size(), 5);
+  ASSERT_EQ(dm.Play(2, 2), Dummy::STOP);
+
+  ASSERT_EQ(winners.size(), 1);
+  ASSERT_EQ(winners[0], 1);
+
+  ASSERT_EQ(players.at(1).bankroll, 12);
+  ASSERT_EQ(players.at(2).bankroll, 8);
 }

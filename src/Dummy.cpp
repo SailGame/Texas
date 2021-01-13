@@ -5,7 +5,7 @@
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
-#define MIN_ROUND_PLAYER_NUM 3
+#define MIN_ROUND_PLAYER_NUM 2
 
 const texas_defines::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
@@ -56,10 +56,7 @@ const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
     while (board.size() < MAX_BOARD_SIZE)
       NextCard(-1);
     Evaluate();
-    return state;
-  }
-
-  if (round_ends) {
+  } else if (round_ends) {
     round_ends = false;
     if (raised) {
       // Someone raised within this turn.
@@ -78,7 +75,6 @@ const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
       } else {
         // Evaluate the winner.
         Evaluate();
-        return state;
       }
     }
   }
@@ -114,8 +110,7 @@ const texas_defines::status_t Dummy::Begin() {
 void Dummy::Evaluate() {
   // Evaluate the game to determine the winner.
 
-  const auto len = board.size();
-  assert(len == MAX_BOARD_SIZE);
+  assert(board.size() == MAX_BOARD_SIZE);
 
   texas_defines::score_t top_score{0};
   for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
@@ -130,6 +125,11 @@ void Dummy::Evaluate() {
       break;
     case 0: // Equal
       winners.push_back(uid);
+      break;
+    case -1: // Less
+      break;
+    default:
+      assert(0);
     }
   }
   state = STOP;
@@ -184,6 +184,7 @@ void Dummy::NextCard(texas_defines::uid_t uid) {
   // @uid = -1 => deal to the board;
   // @uid > 0 => deal to certain player.
 
+  assert(deck.size() > 0);
   const auto card = deck.back();
   deck.pop_back();
 
@@ -192,7 +193,7 @@ void Dummy::NextCard(texas_defines::uid_t uid) {
   } else if (uid > 0) {
     players.at(uid).holecards.push_back(card);
   } else {
-    exit(-1);
+    assert(0);
   }
 }
 
