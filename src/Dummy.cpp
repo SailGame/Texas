@@ -1,21 +1,20 @@
 #include "Dummy.h"
 #include <algorithm>
+#include <cassert>
 #include <random>
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
-#define MIN_ROUND_PLAYER_NUM 4
+#define MIN_ROUND_PLAYER_NUM 2
 
-const Dummy::uid_t Dummy::Join(const std::string &addr) {
+const texas_defines::uid_t Dummy::Join(const std::string &addr) {
   ++user_count;
-  uid2addr.emplace(LastPlayer(), addr);
-  holecards.emplace(LastPlayer(), std::vector<card_t>());
-  alive.emplace(LastPlayer(), 0);
-  allin.emplace(LastPlayer(), 0);
+  players.emplace(LastPlayer(), addr);
   return LastPlayer();
 }
 
-const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
+const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
+                                          const texas_defines::chip_t bet) {
   if (state != READY)
     return state;
 
@@ -27,26 +26,38 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
     // Invalid chip @bet given.
     return INVALID_BET;
 
+  if (bet > players.at(uid).bankroll)
+    // No enough chips.
+    return INVALID_BET;
+
   if (bet == -1) {
-    // Someone choose to drop.
-    alive[uid] = 0;
-    if (--alive_count == 1)
-      Evaluate();
+    // Someone drops.
+    players.at(uid).alive = 0;
+    --alive_count;
+    // It is impossible for the last player to drop.
+    assert(alive_count);
+  } else {
+    if (bet > cur_chips) {
+      // Someone raises.
+      raised = true;
+      last_raised = uid;
+      cur_chips = bet;
+    }
+    players.at(uid).roundbets = bet;
+    if (bet == players.at(uid).bankroll) {
+      // Denotes an all-in
+      players.at(uid).alive = 0;
+      players.at(uid).allin = 1;
+    }
   }
 
-  if (bet > cur_chips) {
-    // Raise
-    raised = true;
-    cur_chips = bet;
-  }
-  roundbets[uid] = bet;
-  if (bet == bankroll[uid]) {
-    // Denotes an all-in
-    alive[uid] = 0;
-    allin[uid] = 1;
-  }
-
-  if (uid == small_blind) {
+  if (next_pos = NextPlayer(next_pos, true); !next_pos) {
+    state = STOP;
+    while (board.size() < MAX_BOARD_SIZE)
+      NextCard(-1);
+    Evaluate();
+  } else if (round_ends) {
+    round_ends = false;
     if (raised) {
       // Someone raised within this turn.
       raised = false;
@@ -64,28 +75,31 @@ const Dummy::status_t Dummy::Play(const uid_t uid, const chip_t bet) {
       } else {
         // Evaluate the winner.
         Evaluate();
-        return state;
       }
     }
   }
 
-  if (next_pos = NextPlayer(next_pos, true); !next_pos)
-    state = STOP;
-
   return state;
 }
 
-const GameStatus Dummy::DumpStatusForUser(const uid_t uid) const {
-  GameStatus ret(state);
+const texas_defines::GameStatus
+Dummy::DumpStatusForUser(const texas_defines::uid_t uid) const {
+  texas_defines::GameStatus ret(state);
   ret.board = board;
-  ret.personal = holecards.at(uid);
+  ret.personal = players.at(uid).holecards;
   return ret;
 }
 
-const Dummy::status_t Dummy::Begin() {
+const texas_defines::status_t Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
-  if (user_count < MIN_ROUND_PLAYER_NUM)
+  alive_count = 0;
+  for (auto &e : players) {
+    e.second.alive = (e.second.bankroll > 0);
+    alive_count += e.second.alive;
+  }
+
+  if (alive_count < MIN_ROUND_PLAYER_NUM)
     return INVALID_PLAYER_NUM;
   if (state == STOP)
     ResetGame();
@@ -96,51 +110,43 @@ const Dummy::status_t Dummy::Begin() {
 void Dummy::Evaluate() {
   // Evaluate the game to determine the winner.
 
-  const auto len = board.size();
-  assert(len == MAX_BOARD_SIZE);
+  assert(board.size() == MAX_BOARD_SIZE);
 
-  uid_t winner = 0;
-  score_t top_score;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-    if (!alive[uid] && !allin[uid])
+  texas_defines::score_t top_score{0};
+  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+    if (!players.at(uid).alive && !players.at(uid).allin)
       continue;
-    score_t cur_score = Score(uid);
-    if (cur_score.Compare(top_score) == 1) {
+    texas_defines::score_t cur_score = Score(uid);
+    switch (cur_score.Compare(top_score)) {
+    case 1: // Greater
       top_score = cur_score;
-      winner = uid;
+      winners.resize(0);
+      winners.push_back(uid);
+      break;
+    case 0: // Equal
+      winners.push_back(uid);
+      break;
+    case -1: // Less
+      break;
+    default:
+      assert(0);
     }
   }
   state = STOP;
-  assert(winner);
 
   // Liquidation
-  chip_t total_chips = 0;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
-    total_chips += roundbets[uid];
-    bankroll[uid] -= roundbets[uid];
-  }
-  bankroll[winner] += total_chips;
-
-  prev_winner = winner;
+  Liquidate();
 }
 
 void Dummy::ResetGame() {
   // *Not* to initialize the whole game engine.
 
   // 1. reset game status;
-  for (auto &e : holecards)
-    e.second.resize(0);
-  for (auto &e : roundbets)
-    e.second = 0;
-  board.resize(0);
-
-  alive_count = 0;
-  for (auto &ent : alive) {
-    ent.second = (bankroll[ent.first] > 0);
-    alive_count += ent.second;
+  for (auto &e : players) {
+    e.second.holecards.resize(0);
+    e.second.roundbets = 0;
   }
-  if (alive_count < MIN_ROUND_PLAYER_NUM)
-    return;
+  board.resize(0);
 
   button = NextPlayer(button, 1);
   assert(button);
@@ -150,8 +156,8 @@ void Dummy::ResetGame() {
     small_blind = 1;
   cur_chips = 0;
 
-  for (auto &ent : allin)
-    ent.second = 0;
+  for (auto &e : players)
+    e.second.allin = 0;
 
   state = READY;
 
@@ -159,31 +165,35 @@ void Dummy::ResetGame() {
   Shuffle();
 
   // 3. Deal cards;
-  for (uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+  for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
     NextCard(uid);
     NextCard(uid);
   }
 
   // 4. Preflop
+  round_ends = false;
   Play(next_pos, 1);
+  round_ends = false;
   Play(next_pos, 2);
+  round_ends = false;
   raised = false;
 }
 
-void Dummy::NextCard(uid_t uid) {
+void Dummy::NextCard(texas_defines::uid_t uid) {
   // Deliver a new card from deck.
   // @uid = -1 => deal to the board;
   // @uid > 0 => deal to certain player.
 
-  const card_t card = deck.back();
+  assert(deck.size() > 0);
+  const auto card = deck.back();
   deck.pop_back();
 
   if (uid == -1) {
     board.push_back(card);
   } else if (uid > 0) {
-    holecards[uid].push_back(card);
+    players.at(uid).holecards.push_back(card);
   } else {
-    exit(-1);
+    assert(0);
   }
 }
 
@@ -202,18 +212,42 @@ void Dummy::Shuffle() {
   std::shuffle(deck.begin(), deck.end(), rng);
 }
 
-const Dummy::uid_t Dummy::NextPlayer(uid_t uid, bool bAlive) const {
+const texas_defines::uid_t Dummy::NextPlayer(texas_defines::uid_t uid,
+                                             bool bAlive) {
   // When @alive is true, return the next living player, or 0 for none alive.
-  if (bAlive && alive_count == 0)
-    return 0;
   const auto mask = !bAlive;
   int cnt = user_count;
   while (cnt--) {
     if (++uid > LastPlayer())
       uid = FirstPlayer();
-    if (alive.at(uid) || mask)
+    if (uid == last_raised)
+      round_ends = true;
+    if (players.at(uid).alive || mask)
       return uid;
   }
-  // Should never reach this.
-  assert(0);
+  return 0;
+}
+
+void Dummy::Liquidate() {
+  assert(winners.size());
+
+  std::vector<bool> win_this_round(user_count + 1, 0);
+  texas_defines::chip_t total_wins = 0;
+  for (const auto &winner : winners) {
+    win_this_round[winner] = 1;
+    total_wins += players.at(winner).roundbets;
+  }
+
+  for (const auto &winner : winners) {
+    const auto winnerbets = players.at(winner).roundbets;
+    auto &winnerbank = players.at(winner).bankroll;
+    for (texas_defines::uid_t uid = FirstPlayer(); uid <= LastPlayer(); ++uid) {
+      if (win_this_round[uid])
+        continue;
+      const auto value = std::min(
+          players.at(uid).roundbets * winnerbets / total_wins, winnerbets);
+      players.at(uid).bankroll -= value;
+      winnerbank += value;
+    }
+  }
 }

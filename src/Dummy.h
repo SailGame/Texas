@@ -5,83 +5,57 @@
 #include <string>
 #include <vector>
 
-struct GameStatus;
-struct CardScore;
+#include "defines.h"
+
 class DummyBackdoor;
 
 class Dummy {
 public:
   enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
 
-  using uid_t = int;
-  using chip_t = int;
-  using card_t = int;
-  using status_t = int;
-  using score_t = CardScore;
-
   friend class DummyBackdoor;
 
 private:
-  std::map<uid_t, const std::string> uid2addr;
+  std::map<texas_defines::uid_t, texas_defines::PlayerStat> players;
 
-  std::map<uid_t, std::vector<card_t>> holecards;
-  std::map<uid_t, chip_t> bankroll, roundbets;
-  std::map<uid_t, int> alive, allin;
-  std::vector<card_t> board, deck;
+  std::vector<texas_defines::card_t> board, deck;
+  std::vector<texas_defines::uid_t> winners;
 
-  status_t state;
+  texas_defines::status_t state;
   int user_count, alive_count;
-  uid_t next_pos, button, prev_winner, small_blind;
-  chip_t cur_chips;
-  bool raised;
+  texas_defines::uid_t next_pos, button, small_blind, last_raised;
+  texas_defines::chip_t cur_chips;
+  bool raised, round_ends;
 
 public:
   explicit Dummy()
-      : state(STOP), user_count(0), next_pos(0), button(0), prev_winner(0),
-        small_blind(0), cur_chips(0), raised(false) {}
+      : state(STOP), user_count(0), next_pos(0), button(0), small_blind(0),
+        cur_chips(0), raised(false), round_ends(false) {}
 
-  const status_t Begin();
-  const uid_t Join(const std::string &addr);
+  const texas_defines::status_t Begin();
+  const texas_defines::uid_t Join(const std::string &addr);
   // positive -> raise or call; zero -> check; -1 -> conceed.
-  const status_t Play(const uid_t uid, const chip_t value);
-  const chip_t Topup(const uid_t uid, const chip_t value) {
-    return (bankroll[uid] += value);
+  const texas_defines::status_t Play(const texas_defines::uid_t uid,
+                                     const texas_defines::chip_t value);
+  const texas_defines::chip_t Topup(const texas_defines::uid_t uid,
+                                    const texas_defines::chip_t value) {
+    return (players.at(uid).bankroll += value);
   }
 
-  const GameStatus DumpStatusForUser(const uid_t uid) const;
+  const texas_defines::GameStatus
+  DumpStatusForUser(const texas_defines::uid_t uid) const;
 
-  const uid_t PreviousWinner() const { return prev_winner; }
-  const uid_t FirstPlayer() const { return 1; }
-  const uid_t LastPlayer() const { return user_count; }
+  const texas_defines::uid_t FirstPlayer() const { return 1; }
+  const texas_defines::uid_t LastPlayer() const { return user_count; }
 
 private:
-  const score_t Score(const uid_t uid);
+  const texas_defines::score_t Score(const texas_defines::uid_t uid);
   void Evaluate();
   void ResetGame();
-  void NextCard(uid_t uid);
-  const uid_t NextPlayer(uid_t uid, bool alive) const;
+  void NextCard(texas_defines::uid_t uid);
+  const texas_defines::uid_t NextPlayer(texas_defines::uid_t uid, bool alive);
   void Shuffle();
-};
-
-struct GameStatus {
-  std::vector<Dummy::card_t> board, personal;
-  Dummy::status_t state;
-  explicit GameStatus(Dummy::status_t state) : state(state) {}
-};
-
-struct CardScore {
-  int royal_straight_flush;
-  int straight_flush;
-  int four_of_a_kind;
-  int full_house;
-  int flush;
-  int straight;
-  int three_of_a_kind;
-  int two_pair;
-  int one_pair;
-  int high_card;
-
-  int Compare(const CardScore &rhs) const;
+  void Liquidate();
 };
 
 namespace poker {
