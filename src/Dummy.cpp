@@ -3,6 +3,8 @@
 #include <cassert>
 #include <random>
 
+namespace SailGame { namespace Texas {
+
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
 #define MIN_ROUND_PLAYER_NUM 2
@@ -251,3 +253,5 @@ void Dummy::Liquidate() {
     }
   }
 }
+
+}}

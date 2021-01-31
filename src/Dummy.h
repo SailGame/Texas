@@ -1,11 +1,12 @@
-#ifndef SAILGAME_TEXAS
-#define SAILGAME_TEXAS
+#pragma once
 
 #include <map>
 #include <string>
 #include <vector>
 
 #include "defines.h"
+
+namespace SailGame { namespace Texas {
 
 class DummyBackdoor;
 
@@ -71,4 +72,5 @@ namespace poker {
 
 }; // namespace poker
 
-#endif
+
+}}

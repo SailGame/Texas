@@ -1,9 +1,7 @@
-#ifndef SAILGAME_TEXAS_DEFINES
-#define SAILGAME_TEXAS_DEFINES
+#pragma once
 
 #include <vector>
-
-namespace texas_defines {
+namespace SailGame { namespace Texas { namespace texas_defines {
 
 struct CardScore;
 
@@ -44,6 +42,4 @@ struct CardScore {
   int Compare(const CardScore &rhs) const;
 };
 
-} // namespace texas_defines
-
-#endif
+}}} // namespace texas_defines

@@ -25,6 +25,8 @@ int high_card(const cardarr_t &cards);
 int _compare(const int a, const int b);
 } // namespace
 
+namespace SailGame { namespace Texas {
+
 const texas_defines::score_t poker::_score(cardarr_t cards) {
   std::sort(cards.begin(), cards.end(), std::greater<int>());
   // 1. Royal Straight Flush
@@ -105,6 +107,8 @@ int texas_defines::CardScore::Compare(
     return ret;
   return _compare(high_card, rhs.high_card);
 }
+
+}}
 
 namespace {
 using cardcnt_t = std::map<int, int>;
