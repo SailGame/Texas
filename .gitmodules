@@ -1,3 +1,6 @@
 [submodule "lib/googletest"]
 	path = lib/googletest
 	url = https://github.com/google/googletest
+[submodule "lib/CommonLib"]
+	path = lib/CommonLib
+	url = https://github.com/SailGame/CommonLib.git

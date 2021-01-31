@@ -18,14 +18,34 @@ jobs:
         os: [ubuntu-20.04]
         build_type: [debug, release]
 
+    env:
+      GRPC_INSTALL_DIR: ~/.grpc_local
+      GRPC_VERSION: 1.32.0
+
     steps:
     - uses: actions/checkout@v1
       with:
         submodules: 'recursive'
 
+    - name: Cache grpc
+      uses: actions/cache@v2
+      id: grpc-cache
+      with:
+        path: ${{env.GRPC_INSTALL_DIR}}
+        key: ${{ runner.os }}-grpc-${{ env.GRPC_VERSION }}
+
     - name: Set up dependencies
+      if: steps.grpc-cache.outputs.cache-hit != 'true'
       run: |
         sudo apt install -y protobuf-compiler libprotobuf-dev
+        mkdir -p $GRPC_INSTALL_DIR
+        git clone --recurse-submodules -b v${{ env.GRPC_VERSION }} https://github.com/grpc/grpc
+        cd grpc
+        mkdir -p cmake/build
+        pushd cmake/build
+        cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=$GRPC_INSTALL_DIR -DBENCHMARK_ENABLE_TESTING=OFF ../..
+        make -j 8
+        make install
 
     - name: Create Build Environment
       working-directory: ${{runner.workspace}}
@@ -35,7 +55,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{runner.workspace}}/build/
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_PREFIX_PATH=$GRPC_INSTALL_DIR
 
     - name: Cache externals
       uses: actions/cache@v2
