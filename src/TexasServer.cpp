@@ -1,7 +1,7 @@
 #include <sailgame/common/game_manager.h>
 #include <sailgame/common/provider_msg_builder.h>
 
-#include "state_machine.h"
+#include "StateMachine.h"
 
 using Core::ProviderMsg;
 using Core::RegisterArgs;
