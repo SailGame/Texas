@@ -3,7 +3,8 @@
 #include <src/Dummy.h>
 #include <src/defines.h>
 
-namespace SailGame { namespace Texas {
+namespace SailGame {
+namespace Texas {
 class DummyBackdoor {
   Dummy &dm;
 
@@ -25,4 +26,5 @@ public:
   const texas_defines::chip_t GetCurrentChips() { return dm.cur_chips; }
 };
 
-}}
+} // namespace Texas
+} // namespace SailGame

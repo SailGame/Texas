@@ -1,6 +1,7 @@
 #include "Backdoor.h"
 
-namespace SailGame { namespace Texas {
+namespace SailGame {
+namespace Texas {
 
 void DummyBackdoor::SetDeck(const std::vector<texas_defines::card_t> &deck) {
   dm.deck.resize(0);
@@ -15,4 +16,5 @@ void DummyBackdoor::RedealCards() {
   }
 }
 
-}}
+} // namespace Texas
+} // namespace SailGame

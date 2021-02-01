@@ -6,7 +6,8 @@
 
 #include "defines.h"
 
-namespace SailGame { namespace Texas {
+namespace SailGame {
+namespace Texas {
 
 class DummyBackdoor;
 
@@ -72,5 +73,5 @@ namespace poker {
 
 }; // namespace poker
 
-
-}}
+} // namespace Texas
+} // namespace SailGame

@@ -2,7 +2,9 @@
 #include <gtest/gtest.h>
 #include <src/Dummy.h>
 
-namespace SailGame { namespace Texas { namespace Test {
+namespace SailGame {
+namespace Texas {
+namespace Test {
 
 TEST(LiquidationTest, Common) {
   {
@@ -163,4 +165,6 @@ TEST(LiquidationTest, MultiwinnersWithAllin) {
   }
 }
 
-}}}
+} // namespace Test
+} // namespace Texas
+} // namespace SailGame

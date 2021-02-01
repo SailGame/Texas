@@ -2,7 +2,9 @@
 #include <src/Dummy.h>
 #include <src/TexasScore.h>
 
-namespace SailGame { namespace Texas { namespace Test {
+namespace SailGame {
+namespace Texas {
+namespace Test {
 
 using namespace poker;
 
@@ -339,4 +341,6 @@ TEST(ScoreTest, ScoreComparision) {
   }
 }
 
-}}}
+} // namespace Test
+} // namespace Texas
+} // namespace SailGame

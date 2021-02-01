@@ -3,7 +3,8 @@
 #include <cassert>
 #include <random>
 
-namespace SailGame { namespace Texas {
+namespace SailGame {
+namespace Texas {
 
 #define MAX_BOARD_SIZE 5
 #define FLOP_BOARD_SIZE 3
@@ -254,4 +255,5 @@ void Dummy::Liquidate() {
   }
 }
 
-}}
+} // namespace Texas
+} // namespace SailGame

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <vector>
-namespace SailGame { namespace Texas { namespace texas_defines {
+namespace SailGame {
+namespace Texas {
+namespace texas_defines {
 
 struct CardScore;
 
@@ -42,4 +44,6 @@ struct CardScore {
   int Compare(const CardScore &rhs) const;
 };
 
-}}} // namespace texas_defines
+} // namespace texas_defines
+} // namespace Texas
+} // namespace SailGame
