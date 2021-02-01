@@ -43,7 +43,7 @@ jobs:
         cd grpc
         mkdir -p cmake/build
         pushd cmake/build
-        cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=ON -DCMAKE_INSTALL_PREFIX=$GRPC_INSTALL_DIR -DBENCHMARK_ENABLE_TESTING=OFF ../..
+        cmake -DgRPC_INSTALL=ON -DCMAKE_INSTALL_PREFIX=$GRPC_INSTALL_DIR -DBENCHMARK_ENABLE_TESTING=OFF ../..
         make -j 8
         make install
 

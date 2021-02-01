@@ -1,9 +1,9 @@
-#ifndef SAILGAME_TEXAS_BACKDOOR
-#define SAILGAME_TEXAS_BACKDOOR
+#pragma once
 
 #include <src/Dummy.h>
 #include <src/defines.h>
 
+namespace SailGame { namespace Texas {
 class DummyBackdoor {
   Dummy &dm;
 
@@ -25,4 +25,4 @@ public:
   const texas_defines::chip_t GetCurrentChips() { return dm.cur_chips; }
 };
 
-#endif
+}}
