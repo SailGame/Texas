@@ -2,6 +2,10 @@
 #include <gtest/gtest.h>
 #include <src/Dummy.h>
 
+namespace SailGame {
+namespace Texas {
+namespace Test {
+
 TEST(LiquidationTest, Common) {
   {
     Dummy dm;
@@ -160,3 +164,7 @@ TEST(LiquidationTest, MultiwinnersWithAllin) {
     ASSERT_EQ(players.at(4).bankroll, 4);
   }
 }
+
+} // namespace Test
+} // namespace Texas
+} // namespace SailGame

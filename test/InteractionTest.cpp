@@ -1,6 +1,10 @@
 #include "Backdoor.h"
 #include <gtest/gtest.h>
 
+namespace SailGame {
+namespace Texas {
+namespace Test {
+
 TEST(InteractionTest, FromInitToPreflop) {
   Dummy dm;
   DummyBackdoor dbd(dm);
@@ -215,3 +219,7 @@ TEST(InteractionTest, Episode2) {
   ASSERT_EQ(players.at(1).bankroll, 12);
   ASSERT_EQ(players.at(2).bankroll, 8);
 }
+
+} // namespace Test
+} // namespace Texas
+} // namespace SailGame

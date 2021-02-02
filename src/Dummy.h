@@ -1,15 +1,19 @@
-#ifndef SAILGAME_TEXAS
-#define SAILGAME_TEXAS
+#pragma once
 
 #include <map>
 #include <string>
 #include <vector>
 
+#include <sailgame/common/state_machine.h>
+
 #include "defines.h"
+
+namespace SailGame {
+namespace Texas {
 
 class DummyBackdoor;
 
-class Dummy {
+class Dummy : public Common::IState {
 public:
   enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
 
@@ -71,4 +75,5 @@ namespace poker {
 
 }; // namespace poker
 
-#endif
+} // namespace Texas
+} // namespace SailGame

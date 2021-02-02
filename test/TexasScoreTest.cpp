@@ -2,6 +2,10 @@
 #include <src/Dummy.h>
 #include <src/TexasScore.h>
 
+namespace SailGame {
+namespace Texas {
+namespace Test {
+
 using namespace poker;
 
 TEST(ScoreTest, ScoreEvaluation) {
@@ -336,3 +340,7 @@ TEST(ScoreTest, ScoreComparision) {
     EXPECT_EQ(_score(cards1).Compare(_score(cards2)), -1);
   }
 }
+
+} // namespace Test
+} // namespace Texas
+} // namespace SailGame

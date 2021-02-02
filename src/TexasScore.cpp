@@ -8,6 +8,9 @@
 #define CARD_COL(c) (c & 0xf0)
 #define CARD_NUM(c) (c & 0xf)
 
+namespace SailGame {
+namespace Texas {
+
 using poker::cardarr_t;
 
 namespace {
@@ -238,3 +241,6 @@ int _compare(const int a, const int b) {
 }
 
 } // namespace
+
+} // namespace Texas
+} // namespace SailGame
