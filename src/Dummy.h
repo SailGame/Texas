@@ -13,7 +13,7 @@ namespace Texas {
 
 class DummyBackdoor;
 
-class Dummy : public Common::IState {
+class Dummy {
 public:
   enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
 

@@ -19,18 +19,12 @@ ProviderMsgs StateMachine::Transition(const RegisterRet &msg) {
 }
 
 ProviderMsgs StateMachine::Transition(const StartGameArgs &msg) {
-  // auto [userIdToInitHandcards, flippedCard, firstPlayer] = mState.NewGame(
-  //     msg.roomid(), Util::ConvertGrpcRepeatedFieldToVector(msg.userid()),
-  //     Util::UnpackGrpcAnyTo<StartGameSettings>(msg.custom()));
-
   ProviderMsgs msgs;
-  // for (const auto &entry : userIdToInitHandcards) {
-  //     auto gameStart = MsgBuilder::CreateGameStart(
-  //         entry.second, flippedCard, firstPlayer);
-  //     auto msgToSend = ProviderMsgBuilder::CreateNotifyMsgArgs(
-  //         0, Core::ErrorNumber::OK, msg.roomid(), entry.first, gameStart);
-  //     msgs.push_back(msgToSend);
-  // }
+  if (mState.mRooms.count(msg.roomid()) > 0) {
+    std::cout << "Recv StartGame on same room twice" << std::endl;
+    return msgs;
+  }
+  auto &room = mState.mRooms[msg.roomid()];
   return msgs;
 }
 

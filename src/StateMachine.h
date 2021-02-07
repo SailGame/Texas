@@ -7,6 +7,7 @@
 #include <sailgame_pb/texas/texas.pb.h>
 
 #include "Dummy.h"
+#include "State.h"
 
 namespace SailGame {
 namespace Texas {
@@ -48,7 +49,7 @@ private:
   ProviderMsgs Transition(const UserOperation &msg);
 
 private:
-  Dummy mState;
+  State mState;
 };
 } // namespace Texas
 } // namespace SailGame
