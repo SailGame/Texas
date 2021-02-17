@@ -25,6 +25,37 @@ using ::Core::UserOperationArgs;
 using ::Texas::NotifyMsg;
 using ::Texas::StartGameSettings;
 using ::Texas::UserOperation;
+using GrpcState = ::Texas::State;
+
+class DummyBackdoor {
+public:
+  DummyBackdoor() = delete;
+  // Getters
+  static void DumpStateToGrpc(const Dummy &dm, texas_defines::uid_t targetUid,
+                              GrpcState &grpcState) {
+    grpcState.set_playernum(dm.players.size());
+    for (size_t i = 0; i < dm.board.size(); i++) {
+      auto *card = grpcState.add_deckcards();
+      card->set_color(
+          static_cast<::Texas::Card_Color>(poker::GetCardColor(dm.board[i])));
+      card->set_num(poker::GetCardNum(dm.board[i]));
+    }
+    for (const auto &[uid, player] : dm.players) {
+      auto *playerStat = grpcState.add_userstates();
+      playerStat->set_userid(uid - 1);
+      playerStat->set_totalpoints(player.bankroll);
+      playerStat->set_roundbet(player.roundbets);
+      if (targetUid == uid) {
+        for (texas_defines::card_t internalCard : player.holecards) {
+          auto *card = playerStat->add_cards();
+          card->set_color(static_cast<::Texas::Card_Color>(
+              poker::GetCardColor(internalCard)));
+          card->set_num(poker::GetCardNum(internalCard));
+        }
+      }
+    }
+  }
+};
 
 class StateMachine : public ProviderStateMachine {
 public:
@@ -47,6 +78,7 @@ protected:
 
 private:
   ProviderMsgs Transition(const UserOperation &msg);
+  void DumpFullState(ProviderMsgs &msgs, int32_t roomId);
 
 private:
   State mState;

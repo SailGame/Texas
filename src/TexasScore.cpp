@@ -4,10 +4,6 @@
 #include <functional>
 #include <map>
 #include <vector>
-
-#define CARD_COL(c) (c & 0xf0)
-#define CARD_NUM(c) (c & 0xf)
-
 namespace SailGame {
 namespace Texas {
 
@@ -29,7 +25,9 @@ int _compare(const int a, const int b);
 } // namespace
 
 const texas_defines::score_t poker::_score(cardarr_t cards) {
-  std::sort(cards.begin(), cards.end(), std::greater<int>());
+  std::sort(cards.begin(), cards.end(), [](const int a, const int b) {
+    return poker::GetCardNum(a) > poker::GetCardNum(b);
+  });
   // 1. Royal Straight Flush
   // 2. Straight Flush
   // 3. Four of a kind
@@ -123,7 +121,7 @@ int straight_flush(const cardarr_t &cards) {
 int four_of_a_kind(const cardarr_t &cards) {
   cardcnt_t cnt;
   for (const auto card : cards) {
-    const auto num = CARD_NUM(card);
+    const auto num = poker::GetCardNum(card);
     if (cnt.count(num))
       ++cnt[num];
     else
@@ -154,10 +152,10 @@ int straight(const cardarr_t &cards) {
   // A K Q 10 9 => 14
   // 5 4 3 2 1  => 5
   // Return the biggest num if being a straight.
-  const int head = CARD_NUM(cards[0]);
+  const int head = poker::GetCardNum(cards[0]);
   for (int i = 1; i < 5; ++i)
-    if (CARD_NUM(cards[i]) != head - i) {
-      if (i == 4 && head == 13 && CARD_NUM(cards[4]) == 1)
+    if (poker::GetCardNum(cards[i]) != head - i) {
+      if (i == 4 && head == 13 && poker::GetCardNum(cards[4]) == 1)
         return 14;
       else
         return 0;
@@ -168,7 +166,7 @@ int straight(const cardarr_t &cards) {
 int three_of_a_kind(const cardarr_t &cards) {
   cardcnt_t cnt;
   for (const auto card : cards) {
-    const auto num = CARD_NUM(card);
+    const auto num = poker::GetCardNum(card);
     if (cnt.count(num))
       ++cnt[num];
     else
@@ -183,7 +181,7 @@ int three_of_a_kind(const cardarr_t &cards) {
 int two_pair(const cardarr_t &cards) {
   cardcnt_t cnt;
   for (const auto card : cards) {
-    const auto num = CARD_NUM(card);
+    const auto num = poker::GetCardNum(card);
     if (cnt.count(num))
       ++cnt[num];
     else
@@ -209,7 +207,7 @@ int two_pair(const cardarr_t &cards) {
 int one_pair(const cardarr_t &cards) {
   cardcnt_t cnt;
   for (const auto card : cards) {
-    const auto num = CARD_NUM(card);
+    const auto num = poker::GetCardNum(card);
     if (cnt.count(num))
       ++cnt[num];
     else
@@ -228,7 +226,7 @@ int one_pair(const cardarr_t &cards) {
 int high_card(const cardarr_t &cards) {
   int ret = 0;
   for (const auto card : cards)
-    ret |= 1 << CARD_NUM(card);
+    ret |= 1 << poker::GetCardNum(card);
   return ret;
 }
 
