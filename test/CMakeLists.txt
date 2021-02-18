@@ -8,4 +8,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE gtest)
 target_link_libraries(${PROJECT_NAME} PRIVATE tcore)
 
 include(GoogleTest)
-gtest_add_tests(${PROJECT_NAME} "" AUTO)
+gtest_discover_tests(${PROJECT_NAME} PROPERTIES LABELS texas)
