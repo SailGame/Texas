@@ -54,11 +54,20 @@ ProviderMsgs StateMachine::Transition(const UserOperationArgs &msg) {
   switch (userOperation.Operation_case()) {
   case UserOperation::OperationCase::kBet:
     room.Play(userid, userOperation.bet().points());
+    break;
   case UserOperation::OperationCase::kCheck:
     room.Play(userid, 0);
+    break;
   case UserOperation::OperationCase::kDrop:
-  case UserOperation::OperationCase::kExit:
     room.Play(userid, -1);
+    break;
+  case UserOperation::OperationCase::kExit:
+    msgs.emplace_back(
+        Common::ProviderMsgBuilder::CreateCloseGameArgs(0, msg.roomid()));
+    return msgs;
+  case UserOperation::OperationCase::kContinue:
+    room.Begin();
+    break;
   }
   DumpFullState(msgs, msg.roomid());
   return msgs;

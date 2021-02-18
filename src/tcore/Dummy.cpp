@@ -16,10 +16,10 @@ const texas_defines::uid_t Dummy::Join(const std::string &addr) {
   return LastPlayer();
 }
 
-const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
-                                          const texas_defines::chip_t bet) {
-  if (state != READY)
-    return state;
+const Dummy::PLAY_STATE Dummy::Play(const texas_defines::uid_t uid,
+                                    const texas_defines::chip_t bet) {
+  if (state != PLAYING)
+    return NOT_PLAYING;
 
   if (uid != next_pos)
     // Not the turn for the user of @uid.
@@ -82,29 +82,25 @@ const texas_defines::status_t Dummy::Play(const texas_defines::uid_t uid,
     }
   }
 
-  return state;
+  return OK;
 }
 
-const texas_defines::GameStatus
-Dummy::DumpStatusForUser(const texas_defines::uid_t uid) const {
-  texas_defines::GameStatus ret(state);
-  ret.board = board;
-  ret.personal = players.at(uid).holecards;
-  return ret;
-}
-
-const texas_defines::status_t Dummy::Begin() {
+const Dummy::GAME_STATE Dummy::Begin() {
   // Start a game turn from initialized status or return state.
 
   alive_count = 0;
   for (auto &e : players) {
-    e.second.alive = (e.second.bankroll > 0);
-    alive_count += e.second.alive;
+    if (e.second.bankroll > 0) {
+      e.second.alive = true;
+      alive_count += 1;
+    } else {
+      e.second.alive = false;
+    }
   }
 
   if (alive_count < MIN_ROUND_PLAYER_NUM)
     return INVALID_PLAYER_NUM;
-  if (state == STOP)
+  else if (state == STOP)
     ResetGame();
 
   return state;
@@ -162,7 +158,7 @@ void Dummy::ResetGame() {
   for (auto &e : players)
     e.second.allin = 0;
 
-  state = READY;
+  state = PLAYING;
 
   // 2. shuffle;
   Shuffle();

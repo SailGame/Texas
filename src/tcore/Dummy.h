@@ -15,8 +15,8 @@ class DummyBackdoor;
 
 class Dummy {
 public:
-  enum { STOP = 0, READY, NOT_YOUR_TURN, INVALID_BET, INVALID_PLAYER_NUM };
-
+  enum GAME_STATE { STOP = 0, PLAYING, INVALID_PLAYER_NUM };
+  enum PLAY_STATE { OK = 0, NOT_PLAYING, NOT_YOUR_TURN, INVALID_BET };
   friend class DummyBackdoor;
 
 private:
@@ -25,7 +25,7 @@ private:
   std::vector<texas_defines::card_t> board, deck;
   std::vector<texas_defines::uid_t> winners;
 
-  texas_defines::status_t state;
+  GAME_STATE state;
   int user_count, alive_count;
   texas_defines::uid_t next_pos, button, small_blind, last_raised;
   texas_defines::chip_t cur_chips;
@@ -36,18 +36,19 @@ public:
       : state(STOP), user_count(0), next_pos(0), button(0), small_blind(0),
         cur_chips(0), raised(false), round_ends(false) {}
 
-  const texas_defines::status_t Begin();
+  const GAME_STATE Begin();
   const texas_defines::uid_t Join(const std::string &addr);
   // positive -> raise or call; zero -> check; -1 -> conceed.
-  const texas_defines::status_t Play(const texas_defines::uid_t uid,
-                                     const texas_defines::chip_t value);
+  // return : true -> ok, false -> invalid operation, currently, we don't
+  // present the failure reason
+  const PLAY_STATE Play(const texas_defines::uid_t uid,
+                        const texas_defines::chip_t value);
   const texas_defines::chip_t Topup(const texas_defines::uid_t uid,
                                     const texas_defines::chip_t value) {
     return (players.at(uid).bankroll += value);
   }
 
-  const texas_defines::GameStatus
-  DumpStatusForUser(const texas_defines::uid_t uid) const;
+  const GAME_STATE GameState() { return state; }
 
   const texas_defines::uid_t FirstPlayer() const { return 1; }
   const texas_defines::uid_t LastPlayer() const { return user_count; }
