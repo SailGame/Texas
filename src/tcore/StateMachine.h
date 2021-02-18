@@ -13,7 +13,6 @@ namespace SailGame {
 namespace Texas {
 
 using Common::IState;
-using Common::ProviderMsgBuilder;
 using Common::ProviderMsgs;
 using Common::ProviderStateMachine;
 using ::Core::CloseGameArgs;

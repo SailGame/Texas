@@ -73,7 +73,7 @@ namespace poker {
   };
 // clang-format on
 
-inline int GetCardColor(int card) { return card > 4; };
+inline int GetCardColor(int card) { return (card >> 4) & 0xf; };
 inline int GetCardNum(int card) { return card & 0xf; };
 
 }; // namespace poker

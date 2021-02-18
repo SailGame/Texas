@@ -76,6 +76,7 @@ void StateMachine::DumpFullState(ProviderMsgs &msgs, int32_t roomId) {
     Texas::NotifyMsg notifyMsg;
     auto *state = notifyMsg.mutable_state();
     DummyBackdoor::DumpStateToGrpc(room, i, *state);
+
     args->mutable_custom()->PackFrom(notifyMsg);
   }
 }
