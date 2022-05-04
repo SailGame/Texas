@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <src/Dummy.h>
-#include <src/TexasScore.h>
+#include <tcore/Dummy.h>
+#include <tcore/TexasScore.h>
 
 namespace SailGame {
 namespace Texas {

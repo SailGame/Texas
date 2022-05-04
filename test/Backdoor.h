@@ -1,7 +1,7 @@
 #pragma once
 
-#include <src/Dummy.h>
-#include <src/defines.h>
+#include <tcore/Dummy.h>
+#include <tcore/defines.h>
 
 namespace SailGame {
 namespace Texas {
