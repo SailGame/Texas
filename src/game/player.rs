@@ -3,6 +3,7 @@ use crate::game::card::Card;
 #[derive(Copy, Clone)]
 pub enum PlayerState {
     ACTIVE,
+    PLAYING,
     WAITING,
     FOLD,
     DISCONNECTED,
@@ -12,10 +13,10 @@ pub enum PlayerState {
 
 #[derive(Clone)]
 pub struct Player {
-    m_name: String,
-    m_chip: i32,
-    m_cards: Vec<Card>,
-    m_state: PlayerState
+    pub m_name: String,
+    pub m_chip: i32,
+    pub m_cards: Vec<Card>,
+    pub m_state: PlayerState
 }
 
 impl Player {

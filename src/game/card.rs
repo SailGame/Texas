@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 #[derive(Copy, Clone)]
-pub enum CARD_COLOR {
+pub enum CardColor {
     SPADE,
     HEART,
     CLUB,
@@ -11,13 +11,13 @@ pub enum CARD_COLOR {
     NONE,
 }
 
-impl CARD_COLOR {
-    pub fn iterator() -> Iter<'static, CARD_COLOR> {
-        static CARD_COLORS: [CARD_COLOR; 4] = [
-            CARD_COLOR::SPADE,
-            CARD_COLOR::HEART,
-            CARD_COLOR::CLUB,
-            CARD_COLOR::DIAMOND,
+impl CardColor {
+    pub fn iterator() -> Iter<'static, CardColor> {
+        static CARD_COLORS: [CardColor; 4] = [
+            CardColor::SPADE,
+            CardColor::HEART,
+            CardColor::CLUB,
+            CardColor::DIAMOND,
         ];
         CARD_COLORS.iter()
     }
@@ -25,19 +25,19 @@ impl CARD_COLOR {
 
 #[derive(Copy, Clone)]
 pub struct Card {
-    m_color: CARD_COLOR,
+    m_color: CardColor,
     m_num: i32, // 2 - 14
 }
 
 impl Card {
     pub fn empty() -> Card {
         return Card {
-            m_color: CARD_COLOR::NONE,
+            m_color: CardColor::NONE,
             m_num: 0,
         };
     }
 
-    pub fn new(color: CARD_COLOR, num: i32) -> Card {
+    pub fn new(color: CardColor, num: i32) -> Card {
         return Card {
             m_color: color,
             m_num: num,
@@ -57,7 +57,7 @@ impl Dealer {
             m_cursor: 0,
         };
 
-        for color in CARD_COLOR::iterator() {
+        for color in CardColor::iterator() {
             for num in 2..14 {
                 dealer.m_cards.push(Card {
                     m_color: color.clone(),
