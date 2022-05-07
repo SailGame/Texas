@@ -68,17 +68,17 @@ impl Dealer {
         return dealer;
     }
 
-    pub fn shuffle(d: &mut Self) {
-        d.m_cards.shuffle(&mut thread_rng());
-        d.m_cursor = 0;
+    pub fn shuffle(&mut self) {
+        self.m_cards.shuffle(&mut thread_rng());
+        self.m_cursor = 0;
     }
 
-    pub fn eject_card(d: &mut Self, burn: bool) -> Card {
-        let cursor = d.m_cursor;
-        d.m_cursor += 1;
+    pub fn eject_card(&mut self, burn: bool) -> Card {
+        let cursor = self.m_cursor;
+        self.m_cursor += 1;
         if burn {
-            d.m_cursor += 1
+            self.m_cursor += 1
         }
-        return d.m_cards[cursor];
+        return self.m_cards[cursor];
     }
 }
