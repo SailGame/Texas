@@ -14,7 +14,6 @@ pub enum PlayerAction {
 
 pub enum DeckState {
     PAUSE,
-    WAITING,
     PLAYING,
 }
 
@@ -43,8 +42,9 @@ pub struct Deck {
     m_sb: usize,
     m_bb: usize,
     m_executor: usize,
-    m_last_executor: usize,
-    m_last_bet: usize,
+    m_round_start: usize,
+    m_min_raise: usize,
+    m_round_bet: usize,
     m_state: DeckState,
 }
 
@@ -59,9 +59,10 @@ impl Deck {
             m_sb: 0,
             m_bb: 0,
             m_executor: 0,
-            m_last_executor: 0,
-            m_last_bet: 0,
-            m_state: DeckState::WAITING,
+            m_round_start: 0,
+            m_min_raise: 0,
+            m_round_bet: 0,
+            m_state: DeckState::PLAYING,
         };
 
         return deck;
@@ -71,43 +72,36 @@ impl Deck {
         return Ok("".into());
     }
 
-    pub fn update_player(
-        &mut self,
-        pos: usize,
-        name: String,
-        chip: usize,
-        status: PlayerState,
-    ) -> Result<String, String> {
+    pub fn add_player(&mut self, name: &String, pos: usize, chip: usize) -> Result<String, String> {
         if pos > self.m_players.len() {
+            return Err("".into());
+        }
+        if chip == 0 {
             return Err("".into());
         }
 
         return Ok("".into());
     }
 
+    pub fn update_player(&mut self, name: &String, chip: usize) -> Result<String, String> {
+        let pos = self.get_player(name)?;
+        let player = &mut self.m_players[pos];
+        player.m_chip = chip;
+
+        return Ok("".into());
+    }
+
+    pub fn disconnect(&mut self, name: &String) -> Result<String, String> {
+        let pos = self.get_player(name)?;
+        let player = &mut self.m_players[pos];
+        player.m_state.m_conn = PlayerConnectionState::DISCONNECTED;
+        return Ok("".into());
+    }
+
     pub fn start(&mut self) -> Result<String, String> {
         let mut available_players: i32 = 0;
-        for p in &self.m_players {
-            match p.m_state.m_deck {
-                PlayerDeckState::ACTIVE => available_players += 1,
-                PlayerDeckState::WAITING => available_players += 1,
-                _ => (),
-            }
-        }
-        if available_players < 2 {
+        if self.m_players.len() < 2 {
             return Err("".into());
-        }
-
-        for p in &mut self.m_players {
-            match p.m_state.m_deck {
-                PlayerDeckState::ACTIVE => p.m_state.m_game = PlayerGameState::PLAYING,
-                PlayerDeckState::WAITING => {
-                    p.m_state.m_deck = PlayerDeckState::ACTIVE;
-                    p.m_state.m_game = PlayerGameState::PLAYING;
-                }
-                // big blind
-                _ => (),
-            }
         }
 
         self.init_button_and_blind();
@@ -118,41 +112,63 @@ impl Deck {
         return Ok("".into());
     }
 
-    pub fn stop(&self) -> Result<String, String> {
-        return Ok("".into());
-    }
-
-    pub fn act(
-        &mut self,
-        pos: usize,
-        name: String,
-        action: PlayerAction,
-    ) -> Result<String, String> {
+    pub fn act(&mut self, name: &String, action: PlayerAction) -> Result<String, String> {
+        let pos = self.get_player(name)?;
         if pos != self.m_executor {
             return Err("".into());
         }
         let player = &mut self.m_players[pos];
-
         match action {
             PlayerAction::BET(num) => {
-                let remaining_chip = player.m_chip - player.m_bet_chip;
-                if num != remaining_chip && num < self.m_last_bet {
+                let remaining_chip = player.m_chip - player.m_total_bet_chip;
+                if num > remaining_chip || num == 0 {
                     return Err("".into());
                 }
-                if num > remaining_chip {
+                else if num + player.m_bet_chip < self.m_round_bet {
+                    if num != remaining_chip {
+                        return Err("".into());
+                    }
+                    // ALLIN
+                }
+                else if num + player.m_bet_chip == self.m_round_bet {
+                    // call
+                }
+                else if num + player.m_bet_chip - self.m_round_bet >= self.m_min_raise {
+                    let raise : usize = num + player.m_bet_chip - self.m_round_bet;
+
+                    self.m_min_raise = raise;
+                    self.m_round_start = pos;
+                    self.m_round_bet = num + player.m_bet_chip;
+                }
+                else {
                     return Err("".into());
                 }
 
                 player.m_bet_chip += num;
-                self.m_last_bet = cmp::max(num, self.m_last_bet);
-                self.m_last_executor = pos;
+                player.m_total_bet_chip += num;
+
+                if player.m_total_bet_chip == player.m_chip {
+                    player.m_state.m_game = PlayerGameState::ALLIN;
+                }
             }
-            PlayerAction::CHECK => (),
-            PlayerAction::FOLD => (),
-            PlayerAction::SHOWHAND => (),
+            PlayerAction::CHECK => {
+                if self.m_round_bet != 0 {
+                    return Err("".into());
+                }
+            }
+            PlayerAction::FOLD => {
+                player.m_state.m_game = PlayerGameState::FOLD;
+            }
+            PlayerAction::SHOWHAND => {
+                return Err("Not implement".into());
+            }
         }
 
         self.m_executor = self.get_executor(self.m_executor, true).unwrap();
+
+        if self.m_executor == self.m_round_start {
+            self.deal()
+        }
 
         return Ok("".into());
     }
@@ -161,8 +177,10 @@ impl Deck {
         self.m_button = self.get_executor(self.m_button, true).unwrap();
         self.m_sb = self.get_executor(self.m_button, true).unwrap();
         self.m_bb = self.get_executor(self.m_sb, true).unwrap();
+        self.m_min_raise = self.m_bb;
+        self.m_round_bet = 0;
         self.m_executor = self.get_executor(self.m_bb, true).unwrap();
-        self.m_last_executor = self.m_executor;
+        self.m_round_start = self.m_executor;
     }
 
     fn init_cards(&mut self) {
@@ -178,6 +196,41 @@ impl Deck {
             self.m_players[exec].m_cards[1] = self.m_dealer.eject_card(false);
             exec = self.get_executor(exec, true).unwrap();
         }
+    }
+
+    fn deal(&mut self) {
+        match self.m_cards.len() {
+            0 => {
+                self.m_cards.push(self.m_dealer.eject_card(false));
+                self.m_cards.push(self.m_dealer.eject_card(false));
+                self.m_cards.push(self.m_dealer.eject_card(true));
+            }
+            3 => {
+                self.m_cards.push(self.m_dealer.eject_card(true));
+            }
+            4 => {
+                self.m_cards.push(self.m_dealer.eject_card(true));
+            }
+            5 => {
+                self.settle();
+            }
+            _ => {
+                panic!("");
+            }
+        }
+
+        self.m_executor = self.get_executor(self.m_sb, false).unwrap();
+        self.m_round_start = self.m_executor;
+        self.m_round_bet = 0;
+        self.m_min_raise = self.m_bb;
+
+        for player in &mut self.m_players {
+            player.m_bet_chip = 0;
+        }
+    }
+
+    fn settle(&mut self) {
+
     }
 
     fn reset_timer(&mut self) {}
@@ -199,5 +252,16 @@ impl Deck {
             }
             return Err("".into());
         }
+    }
+
+    fn get_player(&mut self, name: &String) -> Result<usize, String> {
+        let mut pos: usize = 0;
+        for p in &mut self.m_players {
+            if p.m_name == *name {
+                return Ok(pos);
+            }
+            pos += 1;
+        }
+        return Err("".into());
     }
 }
