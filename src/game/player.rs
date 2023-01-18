@@ -34,7 +34,7 @@ impl PlayerState {
 pub struct Player {
     pub m_name: String,
     pub m_chip: usize,
-    pub m_bet_chip: usize,
+    pub m_round_bet_chip: usize,
     pub m_total_bet_chip: usize,
     pub m_cards: Vec<Card>,
     pub m_state: PlayerState,
@@ -45,7 +45,7 @@ impl Player {
         return Player {
             m_name: "".to_string(),
             m_chip: 0,
-            m_bet_chip: 0,
+            m_round_bet_chip: 0,
             m_total_bet_chip: 0,
             m_cards: Vec::new(),
             m_state: PlayerState::empty(),
@@ -69,7 +69,20 @@ impl Player {
     pub fn clear(&mut self) {
         self.m_name.clear();
         self.m_chip = 0;
-        self.m_bet_chip = 0;
+        self.m_round_bet_chip = 0;
         self.m_total_bet_chip = 0;
+    }
+
+    pub fn round_clear(&mut self) {
+        self.m_round_bet_chip = 0;
+    }
+
+    pub fn bet(&mut self, num: usize) {
+        self.m_round_bet_chip += num;
+        self.m_total_bet_chip += num;
+
+        if self.m_total_bet_chip == self.m_chip {
+            self.m_state.m_game = PlayerGameState::ALLIN;
+        }
     }
 }
