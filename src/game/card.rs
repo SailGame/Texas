@@ -2,7 +2,7 @@ use core::slice::Iter;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum CardColor {
     SPADE,
     HEART,
@@ -23,7 +23,7 @@ impl CardColor {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Card {
     m_color: CardColor,
     m_num: i32, // 2 - 14

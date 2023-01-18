@@ -1,13 +1,14 @@
 use crate::game::card::Card;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PlayerGameState {
+    WAITING,
     PLAYING,
     ALLIN,
     FOLD,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PlayerConnectionState {
     OK,
     DISCONNECTED,
@@ -23,7 +24,7 @@ pub struct PlayerState {
 impl PlayerState {
     pub fn empty() -> PlayerState {
         return PlayerState {
-            m_game: PlayerGameState::PLAYING,
+            m_game: PlayerGameState::WAITING,
             m_conn: PlayerConnectionState::DISCONNECTED,
         };
     }
@@ -51,17 +52,24 @@ impl Player {
         };
     }
 
-    pub fn new(name: String, chip: usize) -> Player {
-        return Player {
-            m_name: name,
-            m_chip: chip,
-            m_bet_chip: 0,
-            m_total_bet_chip: 0,
-            m_cards: vec![Card::empty(); 2],
-            m_state: PlayerState {
-                m_game: PlayerGameState::PLAYING,
-                m_conn: PlayerConnectionState::OK,
-            }
-        };
+    pub fn is_empty(&self) -> bool {
+        return self.m_name.is_empty();
+    }
+
+    pub fn init(&mut self, name: &String, chip: usize) {
+        self.m_name = name.clone();
+        self.m_chip = chip;
+        self.m_cards = vec![Card::empty(); 2];
+        self.m_state = PlayerState {
+            m_game: PlayerGameState::WAITING,
+            m_conn: PlayerConnectionState::OK,
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.m_name.clear();
+        self.m_chip = 0;
+        self.m_bet_chip = 0;
+        self.m_total_bet_chip = 0;
     }
 }
