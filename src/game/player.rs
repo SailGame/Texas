@@ -1,5 +1,7 @@
 use crate::game::card::Card;
 
+use super::ranking::CardScore;
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PlayerGameState {
     WAITING,
@@ -37,6 +39,7 @@ pub struct Player {
     pub m_round_bet_chip: usize,
     pub m_total_bet_chip: usize,
     pub m_cards: Vec<Card>,
+    pub m_hand_score: Option<CardScore>,
     pub m_state: PlayerState,
 }
 
@@ -48,6 +51,7 @@ impl Player {
             m_round_bet_chip: 0,
             m_total_bet_chip: 0,
             m_cards: Vec::new(),
+            m_hand_score: None,
             m_state: PlayerState::empty(),
         };
     }
@@ -59,7 +63,6 @@ impl Player {
     pub fn init(&mut self, name: &String, chip: usize) {
         self.m_name = name.clone();
         self.m_chip = chip;
-        self.m_cards = vec![Card::empty(); 2];
         self.m_state = PlayerState {
             m_game: PlayerGameState::WAITING,
             m_conn: PlayerConnectionState::OK,
@@ -71,6 +74,8 @@ impl Player {
         self.m_chip = 0;
         self.m_round_bet_chip = 0;
         self.m_total_bet_chip = 0;
+        self.m_cards.clear();
+        self.m_hand_score = None;
     }
 
     pub fn round_clear(&mut self) {

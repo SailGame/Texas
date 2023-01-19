@@ -2,7 +2,7 @@ use crate::game::card::Card;
 use crate::game::card::Dealer;
 use crate::game::player::*;
 
-use std::cmp;
+use super::ranking::calculate_player_hand_score;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PlayerAction {
@@ -240,11 +240,14 @@ impl Deck {
         let mut exec = self.get_executor(self.m_sb, false).unwrap();
 
         for _i in 0..self.get_num_of_players(PlayerGameState::PLAYING) {
-            self.m_players[exec].m_cards[0] = self.m_dealer.eject_card(false);
-            self.m_players[exec].m_cards[1] = self.m_dealer.eject_card(false);
+            self.m_players[exec].m_cards.clear();
+            self.m_players[exec].m_cards.push(self.m_dealer.eject_card(false));
+            self.m_players[exec].m_cards.push(self.m_dealer.eject_card(false));
             exec = self.get_executor(exec, true).unwrap();
         }
         assert_eq!(exec, self.m_sb);
+
+        self.m_cards.clear();
     }
 
     fn deal(&mut self) {
@@ -278,7 +281,15 @@ impl Deck {
     }
 
     fn settle(&mut self) {
-        panic!();
+        while self.m_cards.len() < 5 {
+            self.deal();
+        }
+
+        self.m_players.iter_mut().for_each(|p| {
+            if p.m_cards.len() == 2 {
+                p.m_hand_score.replace(calculate_player_hand_score(&p.m_cards, &self.m_cards));
+            }
+        });
     }
 
     fn reset_timer(&mut self) {}
@@ -333,8 +344,7 @@ mod tests {
         assert!(deck.add_player(&p2, 0, 200).is_err());
         assert!(deck.add_player(&p2, 1, 200).is_ok());
 
-        assert!(deck.m_players[0].m_cards[0] == Card::empty());
-        assert!(deck.m_players[0].m_cards[1] == Card::empty());
+        assert_eq!(deck.m_players[0].m_cards.is_empty(), true);
 
         assert!(deck.start().is_ok());
 
@@ -343,8 +353,7 @@ mod tests {
         assert!(deck.m_sb == 0);
         assert!(deck.m_bb == 1);
 
-        assert!(deck.m_players[0].m_cards[0] != Card::empty());
-        assert!(deck.m_players[0].m_cards[1] != Card::empty());
+        assert_eq!(deck.m_players[0].m_cards.is_empty(), false);
     }
 
     #[test]

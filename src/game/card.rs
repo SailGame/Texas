@@ -2,13 +2,12 @@ use core::slice::Iter;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CardColor {
     SPADE,
     HEART,
     CLUB,
     DIAMOND,
-    NONE,
 }
 
 impl CardColor {
@@ -23,21 +22,16 @@ impl CardColor {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Card {
-    m_color: CardColor,
-    m_num: i32, // 2 - 14
+    pub m_num: i32,
+    pub m_color: CardColor,
 }
 
 impl Card {
-    pub fn empty() -> Card {
-        return Card {
-            m_color: CardColor::NONE,
-            m_num: 0,
-        };
-    }
-
     pub fn new(color: CardColor, num: i32) -> Card {
+        assert!(num >= 2 && num <= 14);
+
         return Card {
             m_color: color,
             m_num: num,
@@ -59,10 +53,7 @@ impl Dealer {
 
         for color in CardColor::iterator() {
             for num in 2..14 {
-                dealer.m_cards.push(Card {
-                    m_color: color.clone(),
-                    m_num: num,
-                });
+                dealer.m_cards.push(Card::new(color.clone(), num));
             }
         }
         return dealer;
