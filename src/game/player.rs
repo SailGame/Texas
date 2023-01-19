@@ -1,8 +1,9 @@
 use crate::game::card::Card;
+use serde::{Deserialize, Serialize};
 
 use super::ranking::CardScore;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum PlayerGameState {
     WAITING,
     PLAYING,
@@ -10,14 +11,14 @@ pub enum PlayerGameState {
     FOLD,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum PlayerConnectionState {
     OK,
     DISCONNECTED,
 }
 
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Deserialize, Serialize)]
 pub struct PlayerState {
     pub m_game: PlayerGameState,
     pub m_conn: PlayerConnectionState,

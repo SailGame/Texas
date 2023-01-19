@@ -1,7 +1,10 @@
 use crate::game::card::Card;
 use crate::game::card::Dealer;
+use crate::game::log::PrivatePlayerState;
 use crate::game::player::*;
+use serde::{Deserialize, Serialize};
 
+use super::log::{DeckLogger, DeckState};
 use super::ranking::calculate_player_hand_score;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -12,12 +15,13 @@ pub enum PlayerAction {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub enum DeckState {
+pub enum GameState {
     WAITING,
     PAUSE,
     PLAYING,
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct DeckConfig {
     m_small_blind: usize,
     m_big_blind: usize,
@@ -46,11 +50,12 @@ pub struct Deck {
     m_pos_of_next_round: usize,
     m_min_raise: usize,
     m_round_bet: usize,
-    m_state: DeckState,
+    m_state: GameState,
+    m_logger: Box<dyn DeckLogger>
 }
 
 impl Deck {
-    pub fn new(max_players: usize) -> Deck {
+    pub fn new(max_players: usize, logger: Box<dyn DeckLogger>) -> Deck {
         let mut deck = Deck {
             m_config: DeckConfig::default(),
             m_players: vec![Player::empty(); max_players],
@@ -63,7 +68,8 @@ impl Deck {
             m_pos_of_next_round: 0,
             m_min_raise: 0,
             m_round_bet: 0,
-            m_state: DeckState::WAITING,
+            m_state: GameState::WAITING,
+            m_logger: logger
         };
 
         return deck;
@@ -96,8 +102,8 @@ impl Deck {
     }
 
     pub fn update_player(&mut self, name: &String, chip: usize) -> Result<String, String> {
-        if self.m_state != DeckState::WAITING {
-            return Err("Invalid DeckState".into());
+        if self.m_state != GameState::WAITING {
+            return Err("Invalid GameState".into());
         }
         let pos = self.get_player(name)?;
         let player = &mut self.m_players[pos];
@@ -118,7 +124,7 @@ impl Deck {
     }
 
     pub fn start(&mut self) -> Result<(), String> {
-        if self.m_state != DeckState::WAITING {
+        if self.m_state != GameState::WAITING {
             return Err("Invalid deck state".into());
         }
         if self.get_num_of_players(PlayerGameState::WAITING) < 2 {
@@ -129,7 +135,14 @@ impl Deck {
         self.init_button_and_blind();
         self.init_cards();
         self.reset_timer();
-        self.m_state = DeckState::PLAYING;
+        self.m_state = GameState::PLAYING;
+
+        self.m_logger.publish_deck_state(&DeckState{
+            config: self.m_config,
+            players: vec![],
+            executor: self.m_executor,
+            timeout: 0,
+        });
 
         return Ok(());
     }
@@ -240,9 +253,16 @@ impl Deck {
         let mut exec = self.get_executor(self.m_sb, false).unwrap();
 
         for _i in 0..self.get_num_of_players(PlayerGameState::PLAYING) {
-            self.m_players[exec].m_cards.clear();
-            self.m_players[exec].m_cards.push(self.m_dealer.eject_card(false));
-            self.m_players[exec].m_cards.push(self.m_dealer.eject_card(false));
+            let player = &mut self.m_players[exec];
+            player.m_cards.clear();
+            player.m_cards.push(self.m_dealer.eject_card(false));
+            player.m_cards.push(self.m_dealer.eject_card(false));
+
+            self.m_logger.publish_private_player_state(&PrivatePlayerState{
+                name: player.m_name.clone(),
+                cards: player.m_cards.clone()
+            });
+
             exec = self.get_executor(exec, true).unwrap();
         }
         assert_eq!(exec, self.m_sb);
@@ -329,11 +349,32 @@ impl Deck {
 
 #[cfg(test)]
 mod tests {
-    use crate::game::{deck::{Deck, PlayerAction}, card::Card};
+    use crate::game::{deck::{Deck, PlayerAction}, log::{DeckLogger, DeckState, PrivatePlayerState, SettleState}};
 
+    #[derive(Default)]
+    struct MockDeckLogger {
+        deck_states: Vec<DeckState>,
+        private_player_states: Vec<PrivatePlayerState>,
+        settle_states: Vec<SettleState>
+    }
+
+    impl DeckLogger for MockDeckLogger {
+        fn publish_deck_state(&mut self, state: &DeckState) {
+            self.deck_states.push(state.clone());
+        }
+
+        fn publish_private_player_state(&mut self, state: &PrivatePlayerState) {
+            self.private_player_states.push(state.clone());
+        }
+
+        fn publish_settle_state(&mut self, state: &SettleState) {
+            self.settle_states.push(state.clone());
+        }
+    }
     #[test]
     fn init_deck() {
-        let mut deck = Deck::new(8);
+        let mut mock_logger = Box::new(MockDeckLogger::default());
+        let mut deck = Deck::new(8, mock_logger);
 
         let p1 = "jack".to_string();
         assert!(deck.add_player(&p1, 0, 100).is_ok());
@@ -358,7 +399,8 @@ mod tests {
 
     #[test]
     fn settle_1v1() {
-        let mut deck = Deck::new(8);
+        let mut mock_logger = Box::new(MockDeckLogger::default());
+        let mut deck = Deck::new(8, mock_logger);
 
         let p1 = "jack".to_string();
         assert_eq!(deck.add_player(&p1, 0, 100), Ok(()));
