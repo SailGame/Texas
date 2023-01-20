@@ -116,13 +116,6 @@ impl Deck {
         self.m_players.iter().filter(|p| !p.is_empty() && p.m_state.m_game == state).count()
     }
 
-    pub fn disconnect(&mut self, name: &String) -> Result<String, String> {
-        let pos = self.get_player(name)?;
-        let player = &mut self.m_players[pos];
-        player.m_state.m_conn = PlayerConnectionState::DISCONNECTED;
-        return Ok("".into());
-    }
-
     pub fn start(&mut self) -> Result<(), String> {
         if self.m_state != GameState::WAITING {
             return Err("Invalid deck state".into());
@@ -134,7 +127,6 @@ impl Deck {
         self.set_player_state_playing();
         self.init_button_and_blind();
         self.init_cards();
-        self.reset_timer();
         self.m_state = GameState::PLAYING;
 
         self.m_logger.publish_deck_state(&DeckState{
@@ -311,10 +303,6 @@ impl Deck {
             }
         });
     }
-
-    fn reset_timer(&mut self) {}
-
-    fn timeout(&mut self) {}
 
     fn reset(&mut self) {}
 

@@ -11,24 +11,15 @@ pub enum PlayerGameState {
     FOLD,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub enum PlayerConnectionState {
-    OK,
-    DISCONNECTED,
-}
-
-
 #[derive(Copy, Clone, Deserialize, Serialize)]
 pub struct PlayerState {
     pub m_game: PlayerGameState,
-    pub m_conn: PlayerConnectionState,
 }
 
 impl PlayerState {
     pub fn empty() -> PlayerState {
         return PlayerState {
             m_game: PlayerGameState::WAITING,
-            m_conn: PlayerConnectionState::DISCONNECTED,
         };
     }
 }
@@ -66,7 +57,6 @@ impl Player {
         self.m_chip = chip;
         self.m_state = PlayerState {
             m_game: PlayerGameState::WAITING,
-            m_conn: PlayerConnectionState::OK,
         }
     }
 
