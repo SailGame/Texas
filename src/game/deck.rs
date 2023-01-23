@@ -17,7 +17,6 @@ pub enum PlayerAction {
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum GameState {
     WAITING,
-    PAUSE,
     PLAYING,
 }
 
