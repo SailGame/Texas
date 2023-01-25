@@ -1,12 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
-use prost::bytes::{BytesMut, BufMut};
 use tokio_stream::StreamExt;
-use tonic::{transport::{Channel, Uri}, Streaming, codec::{Codec, Encoder, Decoder, DecodeBuf}};
+use tonic::{transport::{Channel, Uri}, Streaming};
 
-use crate::game::{log::DeckLogger, deck::Deck};
+use crate::game::{deck::{Deck, MAX_NUM_OF_PLAYERS}};
 
-use super::{core_proto, texas_proto};
+use super::{texas_proto};
+use super::{core_proto};
 use super::core_proto::{game_core_client::GameCoreClient, provider_msg};
 
 struct TexasGame {
@@ -39,7 +39,7 @@ impl TexasProvider {
                     id: config.m_id.clone(),
                     game_name: "Texas".to_string(),
                     game_setting: Some(core_proto::GameSetting{
-                        max_users: 9,
+                        max_users: MAX_NUM_OF_PLAYERS as i32,
                         min_users: 2,
                     })
                 }
@@ -97,15 +97,9 @@ impl TexasProvider {
     }
 
     fn start_game(&mut self, msg: core_proto::StartGameArgs) {
-        let codec = tonic::codec::ProstCodec::<texas_proto::StartGameSettings, texas_proto::StartGameSettings>::default();
-
-        if let Some(custom_msg) = msg.custom {
-            let bytes = BytesMut::new();
-            bytes.put(&custom_msg.value);
-            let buf = DecodeBuf::from(custom_msg.value.);
-            let mut texas_config = codec.decoder().decode(&mut buf);
-        }
-        self.m_games.insert(msg.room_id, msg.)
+        let custom_msg = msg.custom.unwrap();  
+        let mut texas_config = <texas_proto::StartGameSettings as prost::Message>::decode(custom_msg.value.as_slice()).unwrap();
+        self.m_games.insert(msg.room_id, TexasGame { m_deck: Deck::new()});
         todo!()
     }
 
@@ -117,19 +111,4 @@ impl TexasProvider {
         todo!()
     }
 
-}
-
-
-impl DeckLogger for TexasProvider {
-    fn publish_deck_state(&mut self, state: &crate::game::log::DeckState) {
-        todo!()
-    }
-
-    fn publish_private_player_state(&mut self, state: &crate::game::log::PrivatePlayerState) {
-        todo!()
-    }
-
-    fn publish_settle_state(&mut self, state: &crate::game::log::SettleState) {
-        todo!()
-    }
 }

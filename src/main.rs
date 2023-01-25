@@ -29,5 +29,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let mut provider = TexasProvider::new(config).await;
-    provider.poll().await
+    provider.poll().await;
+    Ok(())
 }
