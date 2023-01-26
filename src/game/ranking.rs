@@ -21,6 +21,9 @@ pub struct CardScore {
 }
 
 pub fn calculate_player_hand_score(hand: &Vec<Card>, public: &Vec<Card>) -> CardScore {
+    // TODO: allow less cards
+    assert!(hand.len() == 2);
+    assert!(public.len() == 5);
     let mut cards = hand.clone();
     cards.extend(public);
 
