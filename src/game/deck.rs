@@ -187,7 +187,7 @@ impl Deck {
             }
         }
 
-        self.m_executor = self.get_executor(self.m_executor.unwrap(), true);
+        self.m_executor = self.calc_executor(self.m_executor.unwrap(), true);
 
         return Ok(());
     }
@@ -221,7 +221,7 @@ impl Deck {
 
         if self.get_num_of_players(PlayerState::PLAYING) >= 2 {
             self.m_pos_of_next_round = None;
-            self.m_executor = self.get_executor(self.m_sb, false);
+            self.m_executor = self.calc_executor(self.m_sb, false);
             self.m_pos_of_next_round = self.m_executor;
         }
         self.m_round_bet = 0;
@@ -240,9 +240,9 @@ impl Deck {
     }
 
     fn init_button_and_blind(&mut self) {
-        self.m_button = self.get_executor(self.m_button, true).unwrap();
-        self.m_sb = self.get_executor(self.m_button, true).unwrap();
-        self.m_bb = self.get_executor(self.m_sb, true).unwrap();
+        self.m_button = self.calc_executor(self.m_button, true).unwrap();
+        self.m_sb = self.calc_executor(self.m_button, true).unwrap();
+        self.m_bb = self.calc_executor(self.m_sb, true).unwrap();
         self.m_min_raise = self.m_config.m_big_blind;
         self.m_round_bet = self.m_config.m_big_blind;
 
@@ -252,14 +252,14 @@ impl Deck {
         let bb = &mut self.m_players[self.m_bb];
         bb.bet(self.m_config.m_big_blind.min(bb.m_chip));
 
-        self.m_executor = self.get_executor(self.m_bb, true);
+        self.m_executor = self.calc_executor(self.m_bb, true);
         assert!(self.m_executor.is_some());
     }
 
     fn init_cards(&mut self) {
         self.m_dealer.shuffle();
 
-        let mut exec = self.get_executor(self.m_sb, false).unwrap();
+        let mut exec = self.calc_executor(self.m_sb, false).unwrap();
 
         for _i in 0..self.get_num_of_players(PlayerState::PLAYING) {
             let player = &mut self.m_players[exec];
@@ -267,7 +267,7 @@ impl Deck {
             player.m_cards.push(self.m_dealer.eject_card(false));
             player.m_cards.push(self.m_dealer.eject_card(false));
 
-            exec = self.get_executor(exec, true).unwrap();
+            exec = self.calc_executor(exec, true).unwrap();
         }
         assert_eq!(exec, self.m_sb);
 
@@ -364,10 +364,10 @@ impl Deck {
         })
     }
 
-    fn get_executor(&self, cur: usize, next: bool) -> Option<usize> {
+    fn calc_executor(&self, cur: usize, next: bool) -> Option<usize> {
         let n_player = self.m_players.len();
         if next {
-            return self.get_executor(cur + 1, false);
+            return self.calc_executor(cur + 1, false);
         } else {
             for n in 0..n_player {
                 let pos = (cur + n) % n_player;
@@ -395,6 +395,18 @@ impl Deck {
             pos += 1;
         }
         return Err("Can't find player".into());
+    }
+
+    pub fn get_players(&self) -> &Vec<Player> {
+        &self.m_players
+    }
+
+    pub fn get_public_cards(&self) -> &Vec<Card> {
+        &self.m_cards
+    }
+
+    pub fn get_executor(&self) -> Option<u32> {
+        return Some(self.m_players[self.m_executor?].m_id);
     }
 }
 
