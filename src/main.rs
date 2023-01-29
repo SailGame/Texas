@@ -17,8 +17,9 @@ struct Args {
     core_url: String,
 }
 
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    env_logger::init();
+
     let args = Args::parse();
 
     let uri = args.core_url.parse::<Uri>().unwrap();
@@ -28,7 +29,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         m_core_address: uri,
     };
 
-    let mut provider = TexasProvider::new(config).await;
-    provider.poll().await;
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let mut provider = TexasProvider::new(config).await;
+            provider.poll().await;
+        });
     Ok(())
 }

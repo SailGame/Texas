@@ -1,5 +1,6 @@
 use std::{collections::HashMap};
 
+use log::{Level, log};
 use prost::Message;
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
@@ -46,7 +47,6 @@ pub struct TexasProvider {
     m_sender: mpsc::Sender<core_proto::ProviderMsg>,
     m_recver: Streaming<core_proto::ProviderMsg>,
     m_games: HashMap<i32, TexasGame>,
-    m_seq: i32,
 }
 
 fn to_grpc_card(card: &Card) -> texas_proto::Card {
@@ -88,7 +88,6 @@ fn to_grpc_player(player: &Player, pos: usize) -> texas_proto::UserState {
 }
 
 fn publish_state(sender: &mut mpsc::Sender<core_proto::ProviderMsg>, room_id: i32, game: &TexasGame) {
-    let mut msg = texas_proto::NotifyMsg::default();
     let mut game_state = texas_proto::GameState::default();
 
     let executor = game.m_deck.get_executor();
@@ -122,7 +121,8 @@ fn publish_state(sender: &mut mpsc::Sender<core_proto::ProviderMsg>, room_id: i3
             game_state.encode(&mut notify_msg.value).unwrap();
             game_state.user_states[pos].clear();
         }
-        sender.blocking_send(core_proto::ProviderMsg {
+
+        let msg = core_proto::ProviderMsg {
             sequence_id: 0,
             msg: Some(provider_msg::Msg::NotifyMsgArgs(
                 core_proto::NotifyMsgArgs{
@@ -132,7 +132,10 @@ fn publish_state(sender: &mut mpsc::Sender<core_proto::ProviderMsg>, room_id: i3
                     custom: Some(notify_msg.clone()),
                 }
             )),
-        }).unwrap();
+        };
+        log!(Level::Info, "Provider sent {:?}", msg);
+
+        sender.blocking_send(msg).unwrap();
     }
 }
 
@@ -154,17 +157,15 @@ impl TexasProvider {
                     })
                 }
             )),
-        });
+        }).await.unwrap();
 
         let stream = async_stream::stream! {
             while let Some(item) = rx.recv().await {
                 yield item;
             }
         };
-
         let mut resp_stream = client.provider(stream).await.unwrap().into_inner();
-
-        reg.await.unwrap();
+        log!(Level::Info, "Provider stream connected");
 
         let ret_msg = resp_stream.next().await.unwrap().unwrap().msg.unwrap();
         if let provider_msg::Msg::RegisterRet(reg_ret) = ret_msg {
@@ -178,30 +179,28 @@ impl TexasProvider {
             panic!("Get Register Ret Failed. Msg {:?}", ret_msg);
         }
 
+        log!(Level::Info, "Get Register Msg Ret");
+
         TexasProvider{
             m_config: config,
             m_client: client,
             m_sender: tx,
             m_recver: resp_stream,
             m_games: HashMap::new(),
-            m_seq: 1
         }
     }
 
 
     pub async fn poll(&mut self) {
+        log!(Level::Info, "Provider starts polling");
+
         loop {
             let msg = self.m_recver.next().await;
+
             if msg.is_some() {
                 self.handle_msg(msg.unwrap().unwrap());
             }
-            
         };
-    }
-
-    fn get_seq(&mut self) -> i32 {
-        self.m_seq += 1;
-        self.m_seq
     }
 
     fn handle_msg(&mut self, msg: core_proto::ProviderMsg) {
@@ -216,11 +215,9 @@ impl TexasProvider {
     }
 
     fn start_game(&mut self, msg: core_proto::StartGameArgs) {
-        // let texas_config = <texas_proto::StartGameSettings as prost::Message>::decode(msg.custom.unwrap().value.as_slice()).unwrap();
-        self.m_games.insert(msg.room_id, TexasGame::new(msg.user_id));
+        log!(Level::Info, "Provider start game {:?}", msg);
 
-        // init
-        let game = self.m_games.get_mut(&msg.room_id).unwrap();
+        let mut game = TexasGame::new(msg.user_id);
 
         let mut pos = 0;
         for (user_id, _) in &game.m_users {
@@ -229,6 +226,8 @@ impl TexasProvider {
         }
         game.m_deck.start().unwrap();
         publish_state(&mut self.m_sender, msg.room_id, &game);
+
+        self.m_games.insert(msg.room_id, game);
     }
 
     fn query_state(&mut self, msg: core_proto::QueryStateArgs) {
@@ -236,6 +235,8 @@ impl TexasProvider {
     }
 
     fn user_operation(&mut self, msg: core_proto::UserOperationArgs) {
+        log!(Level::Info, "Provider recv user operation {:?}", msg);
+
         if let Some(game) = self.m_games.get_mut(&msg.room_id) {
             let texas_operation = <texas_proto::UserOperation as prost::Message>::decode(msg.custom.unwrap().value.as_slice()).unwrap();
             match texas_operation.operation.unwrap() {
