@@ -1,2 +1,2 @@
 # Texas
-Texas Poker Provider - Cpp
+Texas Poker Provider
